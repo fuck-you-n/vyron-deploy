@@ -136,13 +136,16 @@ RETURNS TRIGGER AS $$
 DECLARE
     uname TEXT;
     urole TEXT := 'free';
+    user_count INTEGER;
 BEGIN
     uname := COALESCE(
         NEW.raw_user_meta_data->>'username',
         split_part(NEW.email, '@', 1)
     );
 
-    IF NEW.email = 'admin@vyron.com' THEN
+    -- First user ever gets founder
+    SELECT COUNT(*) INTO user_count FROM auth.users;
+    IF user_count <= 1 THEN
         urole := 'founder';
     END IF;
 
@@ -170,9 +173,4 @@ ON CONFLICT (key) DO NOTHING;
 
 -- ===================== FOUNDER SETUP =====================
 
--- If admin@vyron.com already has an auth account, ensure founder role
-UPDATE user_profiles
-SET role = 'founder'
-WHERE user_id IN (
-    SELECT id FROM auth.users WHERE email = 'admin@vyron.com'
-);
+-- First user to sign up gets founder automatically via trigger
