@@ -394,22 +394,40 @@
     }
 
     // ==================== INIT ====================
-    _supabase.auth.onAuthStateChange((event, session) => {
-        if (session?.user) { loadDashboard(session.user); }
-        else if (event === 'SIGNED_OUT') { currentUser = null; currentProfile = null; currentKeyData = null; }
-    });
+    function initParticles() {
+        const c = document.getElementById('particles');
+        if (!c || c.querySelectorAll('.dot').length > 0) return;
+        for (let i = 0; i < 25; i++) {
+            const d = document.createElement('div');
+            d.className = 'dot';
+            d.style.left = Math.random()*100+'%';
+            d.style.top = Math.random()*100+'%';
+            d.style.animationDelay = Math.random()*8+'s';
+            d.style.animationDuration = (6+Math.random()*6)+'s';
+            c.appendChild(d);
+        }
+    }
 
-    (async () => {
-        const { data: { session } } = await _supabase.auth.getSession();
-        if (session?.user) loadDashboard(session.user);
-
-        document.getElementById('particles')?.querySelectorAll('.dot').length === 0 &&
-        (() => { const c = document.getElementById('particles'); for (let i = 0; i < 25; i++) { const d = document.createElement('div'); d.className = 'dot'; d.style.left = Math.random()*100+'%'; d.style.top = Math.random()*100+'%'; d.style.animationDelay = Math.random()*8+'s'; d.style.animationDuration = (6+Math.random()*6)+'s'; c.appendChild(d); } })();
-
+    function initKeybinds() {
         ['loginEmail','loginPassword'].forEach(id => document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') handleSignIn(); }));
         ['signupUsername','signupEmail','signupPassword'].forEach(id => document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') handleSignUp(); }));
         document.getElementById('licenseKeyInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') handleLinkKey(); });
-    })();
+    }
+
+    try {
+        _supabase.auth.onAuthStateChange((event, session) => {
+            if (session?.user) { loadDashboard(session.user); }
+            else if (event === 'SIGNED_OUT') { currentUser = null; currentProfile = null; currentKeyData = null; }
+        });
+
+        (async () => {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (session?.user) loadDashboard(session.user);
+        })();
+    } catch(e) { console.error('Supabase init failed:', e); }
+
+    initParticles();
+    initKeybinds();
     </script>
 </body>
 </html>
