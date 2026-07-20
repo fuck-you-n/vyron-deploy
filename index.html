@@ -3,81 +3,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vyron — Authenticate</title>
+    <title>Vyron — Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        .auth-particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
-        .auth-particles .dot {
-            position: absolute; width: 2px; height: 2px; background: var(--accent);
-            border-radius: 50%; opacity: 0; animation: float 8s ease-in-out infinite;
-        }
-        @keyframes float {
-            0%, 100% { opacity: 0; transform: translateY(0) scale(1); }
-            50% { opacity: 0.4; transform: translateY(-80px) scale(1.5); }
-        }
+        .auth-particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+        .auth-particles .dot { position: absolute; width: 2px; height: 2px; background: var(--accent); border-radius: 50%; opacity: 0; animation: float 8s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { opacity: 0; transform: translateY(0); } 50% { opacity: 0.4; transform: translateY(-80px); } }
         .features { display: flex; gap: 24px; margin-top: 32px; justify-content: center; }
         .feature { text-align: center; color: var(--text-3); font-size: 11px; }
         .feature i { font-size: 20px; margin-bottom: 6px; display: block; color: var(--accent); }
+
+        .user-dashboard { animation: fadeIn 0.3s; }
+        .user-dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .user-dash-header h2 { font-size: 20px; font-weight: 700; }
+        .user-dash-header .role-badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .role-founder { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        .role-admin { background: rgba(108,63,234,0.15); color: #a78bfa; }
+        .role-premium { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .role-free { background: rgba(96,96,128,0.15); color: #8888a8; }
+
+        .user-info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+        .user-info-item { background: var(--bg-3); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+        .user-info-item .label { font-size: 11px; color: var(--text-3); text-transform: uppercase; margin-bottom: 4px; }
+        .user-info-item .value { font-size: 14px; font-weight: 600; font-family: 'Courier New', monospace; }
+
+        .download-card { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; text-align: center; margin-bottom: 20px; }
+        .download-card .icon { font-size: 48px; margin-bottom: 16px; }
+        .download-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .download-card p { color: var(--text-3); font-size: 13px; margin-bottom: 20px; }
+        .download-card .btn-download {
+            display: inline-flex; align-items: center; gap: 10px; padding: 14px 32px;
+            background: linear-gradient(135deg, #6c3fea, #5530d0); border: none; border-radius: var(--radius-sm);
+            color: white; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; text-decoration: none;
+        }
+        .download-card .btn-download:hover { transform: translateY(-2px); box-shadow: 0 6px 24px var(--accent-glow); }
+        .download-card .btn-download.disabled { opacity: 0.4; cursor: not-allowed; transform: none; pointer-events: none; }
+        .download-card .version-tag { display: inline-block; padding: 4px 12px; background: var(--bg-3); border-radius: 20px; font-size: 12px; color: var(--text-3); margin-bottom: 16px; border: 1px solid var(--border); }
+
+        .changelog-card { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+        .changelog-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text-2); }
+        .changelog-card p { font-size: 13px; color: var(--text-3); line-height: 1.6; }
     </style>
 </head>
 <body>
     <div class="login-screen">
-        <div class="login-bg">
-            <div class="glow glow-1"></div>
-            <div class="glow glow-2"></div>
-        </div>
+        <div class="login-bg"><div class="glow glow-1"></div><div class="glow glow-2"></div></div>
         <div class="auth-particles" id="particles"></div>
 
-        <div class="login-card">
+        <!-- LOGIN FORM -->
+        <div id="loginView" class="login-card">
             <div class="login-logo">
                 <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
                 <h1>VYRON</h1>
                 <p>Authenticate your license key</p>
             </div>
-
-            <div class="login-form">
-                <div class="input-group">
-                    <i class="fas fa-key"></i>
-                    <input type="text" id="licenseKey" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false">
-                </div>
-
-                <button id="btnValidate" class="btn-login" onclick="handleValidate()">
-                    <span id="btnText">Validate Key</span>
-                    <div id="btnSpinner" class="spinner hidden"></div>
-                </button>
-
+            <div class="login-form" id="loginForm">
+                <div class="input-group"><i class="fas fa-key"></i><input type="text" id="licenseKey" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false"></div>
+                <button id="btnValidate" class="btn-login" onclick="handleValidate()"><span id="btnText">Validate Key</span><div id="btnSpinner" class="spinner hidden"></div></button>
                 <div id="statusMessage" class="status-msg hidden"></div>
             </div>
-
             <div class="features">
                 <div class="feature"><i class="fas fa-bolt"></i>Instant Access</div>
                 <div class="feature"><i class="fas fa-shield-halved"></i>HWID Locked</div>
                 <div class="feature"><i class="fas fa-clock"></i>Auto Updates</div>
             </div>
+        </div>
 
+        <!-- USER DASHBOARD (hidden until validated) -->
+        <div id="dashboardView" class="login-card hidden" style="width:520px">
+            <div class="user-dashboard">
+                <div class="user-dash-header">
+                    <h2><i class="fas fa-shield-halved" style="color:var(--accent);margin-right:8px"></i> VYRON</h2>
+                    <span id="dashRoleBadge" class="role-badge role-premium">PREMIUM</span>
+                </div>
 
+                <div class="user-info-grid">
+                    <div class="user-info-item"><div class="label">Key</div><div class="value" id="dashKey">—</div></div>
+                    <div class="user-info-item"><div class="label">Expires</div><div class="value" id="dashExpiry">—</div></div>
+                    <div class="user-info-item"><div class="label">Status</div><div class="value" style="color:var(--green)">Active</div></div>
+                </div>
+
+                <div class="download-card">
+                    <div class="icon" id="dashIcon"><i class="fas fa-crown" style="color:#3b82f6"></i></div>
+                    <h3 id="dashTitle">Premium Loader</h3>
+                    <p id="dashDesc">Full access to all features — aimbot, silent aim, chams, ESP, and more.</p>
+                    <div class="version-tag" id="dashVersion">v1.0.0</div>
+                    <br>
+                    <a id="dashDownloadBtn" class="btn-download" href="#" target="_blank">
+                        <i class="fas fa-download"></i> Download Loader
+                    </a>
+                </div>
+
+                <div class="changelog-card">
+                    <h4><i class="fas fa-scroll"></i> What's New</h4>
+                    <p id="dashChangelog">No changelog available.</p>
+                </div>
+
+                <div style="text-align:center;margin-top:20px">
+                    <button class="btn btn-secondary" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Sign Out</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
     <script>
-        // Particles
-        const container = document.getElementById('particles');
-        if (container) {
-            for (let i = 0; i < 25; i++) {
-                const d = document.createElement('div');
-                d.className = 'dot';
-                d.style.left = Math.random() * 100 + '%';
-                d.style.top = Math.random() * 100 + '%';
-                d.style.animationDelay = Math.random() * 8 + 's';
-                d.style.animationDuration = (6 + Math.random() * 6) + 's';
-                container.appendChild(d);
-            }
+    let currentKeyData = null;
+
+    async function handleValidate() {
+        const keyInput = document.getElementById('licenseKey');
+        const btn = document.getElementById('btnValidate');
+        const btnText = document.getElementById('btnText');
+        const spinner = document.getElementById('btnSpinner');
+        const status = document.getElementById('statusMessage');
+        const keyValue = keyInput.value.trim().toUpperCase();
+        if (!keyValue) { showStatus(status, 'Enter a license key.', 'error'); return; }
+        btn.disabled = true; btnText.textContent = 'Validating...'; spinner.classList.remove('hidden'); status.classList.add('hidden');
+        try {
+            const { data, error } = await _supabase.from('license_keys').select('*').eq('key_value', keyValue).single();
+            if (error || !data) { showStatus(status, 'Key not found.', 'error'); return; }
+            if (!data.is_active) { showStatus(status, 'Key has been revoked.', 'error'); return; }
+            if (data.expires_at && new Date(data.expires_at) < new Date()) { showStatus(status, 'Key has expired.', 'error'); return; }
+            currentKeyData = data;
+            showDashboard(data);
+        } catch (e) { showStatus(status, 'Connection error.', 'error'); }
+        finally { btn.disabled = false; btnText.textContent = 'Validate Key'; spinner.classList.add('hidden'); }
+    }
+
+    async function showDashboard(keyData) {
+        document.getElementById('loginView').classList.add('hidden');
+        document.getElementById('dashboardView').classList.remove('hidden');
+
+        const role = keyData.role || 'free';
+        const isPremiumOrAbove = ['premium', 'admin', 'founder'].includes(role);
+
+        // Role badge
+        const badge = document.getElementById('dashRoleBadge');
+        badge.textContent = role.toUpperCase();
+        badge.className = 'role-badge role-' + role;
+
+        // Key info
+        document.getElementById('dashKey').textContent = keyData.key_value;
+        document.getElementById('dashExpiry').textContent = keyData.expires_at
+            ? new Date(keyData.expires_at).toLocaleDateString() : 'Never';
+
+        // Download section
+        const icon = document.getElementById('dashIcon');
+        const title = document.getElementById('dashTitle');
+        const desc = document.getElementById('dashDesc');
+        const btn = document.getElementById('dashDownloadBtn');
+
+        if (isPremiumOrAbove) {
+            icon.innerHTML = '<i class="fas fa-crown" style="color:#3b82f6"></i>';
+            title.textContent = 'Premium Loader';
+            desc.textContent = 'Full access — aimbot, silent aim, chams, ESP, all features.';
+        } else {
+            icon.innerHTML = '<i class="fas fa-download" style="color:var(--text-3)"></i>';
+            title.textContent = 'Free Loader';
+            desc.textContent = 'Basic features — ESP and basic aimbot.';
         }
+
+        // Fetch download config
+        const { data: config } = await _supabase.from('app_config').select('*');
+        const cfg = {};
+        if (config) config.forEach(r => cfg[r.key] = r.value);
+
+        document.getElementById('dashVersion').textContent = 'v' + (cfg.version || '1.0.0');
+        document.getElementById('dashChangelog').textContent = cfg.changelog || 'No changelog available.';
+
+        const dlUrl = isPremiumOrAbove ? cfg.download_premium_url : cfg.download_free_url;
+        if (dlUrl) {
+            btn.href = dlUrl;
+            btn.classList.remove('disabled');
+        } else {
+            btn.href = '#';
+            btn.classList.add('disabled');
+            btn.innerHTML = '<i class="fas fa-clock"></i> Coming Soon';
+        }
+    }
+
+    function logout() {
+        document.getElementById('dashboardView').classList.add('hidden');
+        document.getElementById('loginView').classList.remove('hidden');
+        document.getElementById('licenseKey').value = '';
+        document.getElementById('statusMessage').classList.add('hidden');
+        currentKeyData = null;
+    }
+
+    function showStatus(el, msg, type) { el.textContent = msg; el.className = 'status-msg ' + type; }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('licenseKey')?.addEventListener('keydown', e => { if (e.key === 'Enter') handleValidate(); });
+        const c = document.getElementById('particles');
+        if (c) for (let i = 0; i < 25; i++) { const d = document.createElement('div'); d.className = 'dot'; d.style.left = Math.random()*100+'%'; d.style.top = Math.random()*100+'%'; d.style.animationDelay = Math.random()*8+'s'; d.style.animationDuration = (6+Math.random()*6)+'s'; c.appendChild(d); }
+    });
     </script>
 </body>
 </html>

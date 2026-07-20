@@ -1,16 +1,22 @@
 let currentSession = null;
 let allKeys = [];
 let currentFilter = 'all';
+let editingKeyId = null;
+
+const ROLE_HIERARCHY = { founder: 4, admin: 3, premium: 2, free: 1 };
+const ROLE_COLORS = { founder: 'gold', admin: 'purple', premium: 'blue', free: 'yellow' };
+const ROLE_ICONS = { founder: 'fa-star', admin: 'fa-shield', premium: 'fa-crown', free: 'fa-user' };
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', async () => {
     const { data } = await _supabase.auth.getSession();
     if (data.session) {
         const userMeta = data.session.user?.app_metadata || {};
-        if (userMeta.role === 'admin') {
+        const role = userMeta.role || 'admin';
+        if (ROLE_HIERARCHY[role] >= ROLE_HIERARCHY['admin']) {
             currentSession = data.session;
+            currentSession.userRole = role;
             showDashboard();
-            return;
         }
     }
 });
@@ -19,7 +25,17 @@ function showDashboard() {
     document.getElementById('adminLogin').classList.add('hidden');
     document.getElementById('adminDashboard').classList.remove('hidden');
     document.getElementById('adminEmailDisplay').textContent = currentSession.user.email;
-    document.getElementById('settingSupabaseUrl').textContent = SUPABASE_URL;
+
+    const role = currentSession.userRole;
+    const roleBadge = document.getElementById('adminRoleDisplay');
+    roleBadge.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+    roleBadge.className = 'admin-role role-' + role;
+
+    const avatar = document.getElementById('adminAvatar');
+    avatar.innerHTML = `<i class="fas ${ROLE_ICONS[role] || 'fa-user-shield'}"></i>`;
+    if (role === 'founder') avatar.style.background = 'linear-gradient(135deg, #f59e0b, #ef4444)';
+    else avatar.style.background = 'linear-gradient(135deg, #6c3fea, #3b82f6)';
+
     loadAllData();
 }
 
@@ -27,152 +43,75 @@ function showDashboard() {
 function showSection(name) {
     document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-
     const section = document.getElementById('section-' + name);
     if (section) section.classList.add('active');
-
-    const titles = { overview: 'Overview', keys: 'License Keys', users: 'Users', subscriptions: 'Subscriptions', downloads: 'Downloads & Versions', settings: 'Settings' };
+    const titles = { overview: 'Overview', keys: 'License Keys', plans: 'Plans & Downloads', users: 'Users', settings: 'Settings' };
     document.getElementById('pageTitle').textContent = titles[name] || name;
-
-    document.querySelectorAll('.nav-item').forEach(n => {
-        if (n.querySelector('span') && n.querySelector('span').textContent.toLowerCase() === name) n.classList.add('active');
-    });
-
-    if (name === 'users') loadUsers();
-    if (name === 'keys') renderKeys();
+    document.querySelectorAll('.nav-item').forEach(n => { if (n.querySelector('span')?.textContent.toLowerCase() === name) n.classList.add('active'); });
+    if (name === 'plans') loadPlanConfig();
+    if (name === 'users') renderUsers();
 }
+function toggleSidebar() { document.querySelector('.sidebar').classList.toggle('open'); }
 
-function toggleSidebar() {
-    document.querySelector('.sidebar').classList.toggle('open');
-}
-
-// ===== ADMIN LOGIN =====
+// ===== LOGIN / LOGOUT =====
 async function handleAdminLogin() {
     const email = document.getElementById('adminEmail').value.trim();
     const password = document.getElementById('adminPassword').value;
+    const status = document.getElementById('adminLoginStatus');
     const btn = document.getElementById('btnAdminLogin');
     const btnText = document.getElementById('adminLoginText');
     const spinner = document.getElementById('adminLoginSpinner');
-    const status = document.getElementById('adminLoginStatus');
-
-    if (!email || !password) { showStatus(status, 'Enter email and password.', 'error'); return; }
-
+    if (!email || !password) { showStatus(status, 'Enter credentials.', 'error'); return; }
     btn.disabled = true; btnText.textContent = 'Signing in...'; spinner.classList.remove('hidden'); status.classList.add('hidden');
-
     try {
         const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
         if (error) { showStatus(status, error.message, 'error'); return; }
-
-        const userMeta = data.user?.app_metadata || {};
-        if (userMeta.role !== 'admin') {
+        const role = data.user?.app_metadata?.role;
+        if (!role || ROLE_HIERARCHY[role] < ROLE_HIERARCHY['admin']) {
             showStatus(status, 'Access denied — admin role required.', 'error');
-            await _supabase.auth.signOut();
-            return;
+            await _supabase.auth.signOut(); return;
         }
-
-        currentSession = data.session;
+        currentSession = data.session; currentSession.userRole = role;
         showDashboard();
-    } catch (e) {
-        showStatus(status, 'Login failed.', 'error');
-    } finally {
-        btn.disabled = false; btnText.textContent = 'Sign In'; spinner.classList.add('hidden');
-    }
+    } catch (e) { showStatus(status, 'Login failed.', 'error'); }
+    finally { btn.disabled = false; btnText.textContent = 'Sign In'; spinner.classList.add('hidden'); }
 }
-
 async function handleLogout() {
-    await _supabase.auth.signOut();
-    currentSession = null;
+    await _supabase.auth.signOut(); currentSession = null;
     document.getElementById('adminDashboard').classList.add('hidden');
     document.getElementById('adminLogin').classList.remove('hidden');
 }
-
 function togglePassword() {
     const input = document.getElementById('adminPassword');
     const icon = document.querySelector('.toggle-pw i');
-    if (input.type === 'password') { input.type = 'text'; icon.className = 'fas fa-eye-slash'; }
-    else { input.type = 'password'; icon.className = 'fas fa-eye'; }
+    input.type = input.type === 'password' ? 'text' : 'password';
+    icon.className = input.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
 }
 
-// ===== DATA LOADING =====
+// ===== DATA =====
 async function loadAllData() { await loadKeys(); }
 
 async function loadKeys() {
-    const { data, error } = await _supabase
-        .from('license_keys').select('*').order('created_at', { ascending: false });
-
+    const { data, error } = await _supabase.from('license_keys').select('*').order('created_at', { ascending: false });
     if (error) { console.error(error); return; }
     allKeys = data || [];
-    updateStats();
-    renderKeys();
-    renderRecentKeys();
+    updateStats(); renderKeys(); renderRoleBreakdown();
 }
 
 function updateStats() {
     const now = new Date();
-    const active = allKeys.filter(k => k.is_active && (!k.expires_at || new Date(k.expires_at) > now)).length;
-    const expired = allKeys.filter(k => k.is_active && k.expires_at && new Date(k.expires_at) <= now).length;
-    const revoked = allKeys.filter(k => !k.is_active).length;
-
     document.getElementById('statTotal').textContent = allKeys.length;
-    document.getElementById('statActive').textContent = active;
-    document.getElementById('statExpired').textContent = expired;
-    document.getElementById('statRevoked').textContent = revoked;
-    document.getElementById('subFreeCount').textContent = allKeys.filter(k => k.tier === 'free').length;
-    document.getElementById('subPremiumCount').textContent = allKeys.filter(k => k.tier === 'premium').length;
+    document.getElementById('statActive').textContent = allKeys.filter(k => k.is_active && (!k.expires_at || new Date(k.expires_at) > now)).length;
+    document.getElementById('statExpired').textContent = allKeys.filter(k => k.is_active && k.expires_at && new Date(k.expires_at) <= now).length;
+    document.getElementById('statRevoked').textContent = allKeys.filter(k => !k.is_active).length;
 }
 
-function renderRecentKeys() {
-    const container = document.getElementById('recentKeysList');
-    const recent = allKeys.slice(0, 5);
-    if (recent.length === 0) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No keys yet</p></div>';
-        return;
-    }
-    container.innerHTML = recent.map(k => {
-        const s = getKeyStatus(k);
-        return `<div class="recent-key-item">
-            <div><div class="key-val">${k.key_value}</div><div class="key-meta">${k.tier} · ${s.label}</div></div>
-            <span class="badge badge-${s.color}">${s.label}</span>
-        </div>`;
-    }).join('');
-}
-
-function renderKeys() {
-    const tbody = document.getElementById('keysTableBody');
-    let filtered = allKeys;
-
-    if (currentFilter !== 'all') {
-        filtered = allKeys.filter(k => {
-            const s = getKeyStatus(k).key;
-            return s === currentFilter;
-        });
-    }
-
-    if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="empty-row"><div class="empty-state"><i class="fas fa-inbox"></i><p>No keys found</p></div></td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = filtered.map(k => {
-        const s = getKeyStatus(k);
-        const created = new Date(k.created_at).toLocaleDateString();
-        const expires = k.expires_at ? new Date(k.expires_at).toLocaleDateString() : 'Never';
-        const hwid = k.hwid ? k.hwid.substring(0, 16) + '...' : '—';
-        return `<tr>
-            <td><input type="checkbox" class="key-check" value="${k.id}" onchange="updateBulkActions()"></td>
-            <td class="key-cell">${k.key_value}</td>
-            <td><span class="badge badge-${k.tier === 'premium' ? 'purple' : 'yellow'}">${k.tier}</span></td>
-            <td style="font-size:11px;color:var(--text-3)">${hwid}</td>
-            <td>${created}</td>
-            <td>${expires}</td>
-            <td><span class="badge badge-${s.color}">${s.label}</span></td>
-            <td><div class="action-btns">
-                ${k.is_active
-                    ? `<button class="btn btn-sm btn-warning" onclick="revokeKey('${k.id}')" title="Revoke"><i class="fas fa-ban"></i></button>`
-                    : `<button class="btn btn-sm btn-success" onclick="activateKey('${k.id}')" title="Activate"><i class="fas fa-check"></i></button>`}
-                <button class="btn btn-sm btn-danger" onclick="deleteKey('${k.id}')" title="Delete"><i class="fas fa-trash"></i></button>
-            </div></td>
-        </tr>`;
+function renderRoleBreakdown() {
+    const container = document.getElementById('roleBreakdown');
+    const roles = ['founder', 'admin', 'premium', 'free'];
+    container.innerHTML = roles.map(r => {
+        const count = allKeys.filter(k => k.role === r).length;
+        return `<div class="info-row"><span><i class="fas ${ROLE_ICONS[r]}" style="color:var(--${ROLE_COLORS[r] === 'gold' ? 'yellow' : ROLE_COLORS[r]});margin-right:8px"></i>${r.charAt(0).toUpperCase() + r.slice(1)}</span><span style="font-weight:700">${count}</span></div>`;
     }).join('');
 }
 
@@ -182,154 +121,196 @@ function getKeyStatus(k) {
     return { key: 'active', label: 'Active', color: 'green' };
 }
 
-function filterKeys(filter, btn) {
-    currentFilter = filter;
+// ===== KEYS TABLE =====
+function renderKeys() {
+    const tbody = document.getElementById('keysTableBody');
+    let filtered = allKeys;
+    if (currentFilter === 'active') filtered = allKeys.filter(k => getKeyStatus(k).key === 'active');
+    else if (currentFilter === 'expired') filtered = allKeys.filter(k => getKeyStatus(k).key === 'expired');
+    else if (currentFilter === 'revoked') filtered = allKeys.filter(k => getKeyStatus(k).key === 'revoked');
+    else if (['founder','admin','premium','free'].includes(currentFilter)) filtered = allKeys.filter(k => k.role === currentFilter);
+
+    if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-row"><div class="empty-state"><i class="fas fa-inbox"></i><p>No keys</p></div></td></tr>'; return; }
+
+    tbody.innerHTML = filtered.map(k => {
+        const s = getKeyStatus(k);
+        const role = k.role || 'free';
+        const created = new Date(k.created_at).toLocaleDateString();
+        const expires = k.expires_at ? new Date(k.expires_at).toLocaleDateString() : 'Never';
+        const hwid = k.hwid ? k.hwid.substring(0, 14) + '...' : '—';
+        return `<tr>
+            <td><input type="checkbox" class="key-check" value="${k.id}" onchange="updateBulkActions()"></td>
+            <td class="key-cell">${k.key_value}</td>
+            <td><span class="badge badge-${ROLE_COLORS[role]}" onclick="openEditRole('${k.id}','${k.key_value}','${role}')" style="cursor:pointer" title="Click to change role"><i class="fas ${ROLE_ICONS[role]}"></i> ${role}</span></td>
+            <td style="font-size:11px;color:var(--text-3)">${hwid}</td>
+            <td>${created}</td><td>${expires}</td>
+            <td><span class="badge badge-${s.color}">${s.label}</span></td>
+            <td><div class="action-btns">
+                ${k.is_active ? `<button class="btn btn-sm btn-warning" onclick="revokeKey('${k.id}')" title="Revoke"><i class="fas fa-ban"></i></button>` : `<button class="btn btn-sm btn-success" onclick="activateKey('${k.id}')" title="Activate"><i class="fas fa-check"></i></button>`}
+                <button class="btn btn-sm btn-danger" onclick="deleteKey('${k.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+            </div></td>
+        </tr>`;
+    }).join('');
+}
+
+function filterKeys(f, btn) {
+    currentFilter = f;
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
     renderKeys();
 }
 
-function handleSearch(query) {
-    if (!query) { renderKeys(); return; }
-    const q = query.toLowerCase();
-    const tbody = document.getElementById('keysTableBody');
-    const filtered = allKeys.filter(k => k.key_value.toLowerCase().includes(q) || (k.hwid && k.hwid.toLowerCase().includes(q)));
-    if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="empty-row"><div class="empty-state"><p>No matching keys</p></div></td></tr>';
-        return;
-    }
-    // Reuse render logic with filtered set
-    const temp = allKeys; allKeys = filtered; renderKeys(); allKeys = temp;
+function handleSearch(q) {
+    if (!q) { renderKeys(); return; }
+    const lq = q.toLowerCase();
+    const temp = allKeys; allKeys = allKeys.filter(k => k.key_value.toLowerCase().includes(lq) || (k.hwid && k.hwid.toLowerCase().includes(lq)));
+    renderKeys(); allKeys = temp;
 }
 
-// ===== SELECT ALL / BULK =====
-function toggleSelectAll(cb) {
-    document.querySelectorAll('.key-check').forEach(c => c.checked = cb.checked);
-    updateBulkActions();
-}
+// ===== SELECT / BULK =====
+function toggleSelectAll(cb) { document.querySelectorAll('.key-check').forEach(c => c.checked = cb.checked); updateBulkActions(); }
 function updateBulkActions() {
-    const checked = document.querySelectorAll('.key-check:checked');
+    const c = document.querySelectorAll('.key-check:checked');
     const bar = document.getElementById('bulkActions');
-    if (checked.length === 0) { bar.classList.add('hidden'); return; }
-    bar.classList.remove('hidden');
-    document.getElementById('selectedCount').textContent = checked.length + ' selected';
+    bar.classList.toggle('hidden', c.length === 0);
+    document.getElementById('selectedCount').textContent = c.length + ' selected';
 }
-function getSelectedIds() {
-    return Array.from(document.querySelectorAll('.key-check:checked')).map(c => c.value);
-}
-async function bulkActivate() {
-    for (const id of getSelectedIds()) await _supabase.from('license_keys').update({ is_active: true }).eq('id', id);
-    await loadKeys();
-}
-async function bulkRevoke() {
-    for (const id of getSelectedIds()) await _supabase.from('license_keys').update({ is_active: false }).eq('id', id);
-    await loadKeys();
-}
-async function bulkDelete() {
-    if (!confirm('Delete selected keys permanently?')) return;
-    for (const id of getSelectedIds()) await _supabase.from('license_keys').delete().eq('id', id);
-    await loadKeys();
-}
+function getSelectedIds() { return Array.from(document.querySelectorAll('.key-check:checked')).map(c => c.value); }
+async function bulkRole(role) { for (const id of getSelectedIds()) await _supabase.from('license_keys').update({ role }).eq('id', id); await loadKeys(); }
+async function bulkRevoke() { for (const id of getSelectedIds()) await _supabase.from('license_keys').update({ is_active: false }).eq('id', id); await loadKeys(); }
+async function bulkDelete() { if (!confirm('Delete selected?')) return; for (const id of getSelectedIds()) await _supabase.from('license_keys').delete().eq('id', id); await loadKeys(); }
 
-// ===== KEY ACTIONS =====
+// ===== KEY CRUD =====
 function generateKey() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    const segs = [];
-    for (let s = 0; s < 4; s++) {
-        let seg = '';
-        for (let i = 0; i < 4; i++) seg += chars[Math.floor(Math.random() * chars.length)];
-        segs.push(seg);
-    }
+    const segs = []; for (let s = 0; s < 4; s++) { let seg = ''; for (let i = 0; i < 4; i++) seg += chars[Math.floor(Math.random() * chars.length)]; segs.push(seg); }
     document.getElementById('newKey').value = segs.join('-');
 }
-
 function showCreateModal() {
     document.getElementById('createModal').classList.remove('hidden');
-    document.getElementById('newKey').value = '';
-    document.getElementById('newTier').value = 'premium';
-    document.getElementById('newExpiry').value = '';
+    document.getElementById('newKey').value = ''; document.getElementById('newRole').value = 'premium'; document.getElementById('newExpiry').value = '';
     document.getElementById('createStatus').classList.add('hidden');
 }
 function closeCreateModal() { document.getElementById('createModal').classList.add('hidden'); }
 
 async function createKey() {
     const key = document.getElementById('newKey').value.trim().toUpperCase();
-    const tier = document.getElementById('newTier').value;
+    const role = document.getElementById('newRole').value;
     const expiry = document.getElementById('newExpiry').value;
     const status = document.getElementById('createStatus');
-
     if (!key) { showStatus(status, 'Enter or generate a key.', 'error'); return; }
-
-    const payload = { key_value: key, tier, is_active: true };
+    const payload = { key_value: key, role, is_active: true };
     if (expiry) payload.expires_at = new Date(expiry).toISOString();
-
     const { error } = await _supabase.from('license_keys').insert(payload);
     if (error) { showStatus(status, error.message, 'error'); return; }
-
-    showStatus(status, 'Key created: ' + key, 'success');
-    await loadKeys();
-    setTimeout(closeCreateModal, 1200);
+    showStatus(status, 'Created: ' + key, 'success');
+    await loadKeys(); setTimeout(closeCreateModal, 1000);
 }
 
-async function revokeKey(id) {
-    await _supabase.from('license_keys').update({ is_active: false }).eq('id', id);
-    await loadKeys();
+async function revokeKey(id) { await _supabase.from('license_keys').update({ is_active: false }).eq('id', id); await loadKeys(); }
+async function activateKey(id) { await _supabase.from('license_keys').update({ is_active: true }).eq('id', id); await loadKeys(); }
+async function deleteKey(id) { if (!confirm('Delete permanently?')) return; await _supabase.from('license_keys').delete().eq('id', id); await loadKeys(); }
+
+// ===== EDIT ROLE MODAL =====
+function openEditRole(id, keyVal, currentRole) {
+    editingKeyId = id;
+    document.getElementById('editRoleKey').textContent = keyVal;
+    document.getElementById('editRoleSelect').value = currentRole;
+    document.getElementById('editRoleModal').classList.remove('hidden');
+    document.getElementById('editRoleStatus').classList.add('hidden');
 }
-async function activateKey(id) {
-    await _supabase.from('license_keys').update({ is_active: true }).eq('id', id);
-    await loadKeys();
+function closeEditRoleModal() { document.getElementById('editRoleModal').classList.add('hidden'); editingKeyId = null; }
+async function saveEditRole() {
+    const role = document.getElementById('editRoleSelect').value;
+    const status = document.getElementById('editRoleStatus');
+    if (!editingKeyId) return;
+    const { error } = await _supabase.from('license_keys').update({ role }).eq('id', editingKeyId);
+    if (error) { showStatus(status, error.message, 'error'); return; }
+    showStatus(status, 'Role updated to ' + role, 'success');
+    await loadKeys(); setTimeout(closeEditRoleModal, 800);
 }
-async function deleteKey(id) {
-    if (!confirm('Delete this key permanently?')) return;
-    await _supabase.from('license_keys').delete().eq('id', id);
-    await loadKeys();
+
+// ===== PLANS / CONFIG =====
+async function loadPlanConfig() {
+    const { data } = await _supabase.from('app_config').select('*');
+    if (!data) return;
+    const map = {}; data.forEach(r => map[r.key] = r.value);
+    document.getElementById('cfgPremiumUrl').value = map['download_premium_url'] || '';
+    document.getElementById('cfgFreeUrl').value = map['download_free_url'] || '';
+    document.getElementById('cfgVersion').value = map['version'] || '1.0.0';
+    document.getElementById('cfgChangelog').value = map['changelog'] || '';
+
+    const counts = { founder: 0, admin: 0, premium: 0, free: 0 };
+    allKeys.forEach(k => { const r = k.role || 'free'; if (counts[r] !== undefined) counts[r]++; });
+
+    document.getElementById('plansGrid').innerHTML = [
+        { role: 'founder', icon: 'fa-star', color: '#f59e0b', name: 'Founder', desc: 'Full control — manages admins, all access' },
+        { role: 'admin', icon: 'fa-shield', color: '#6c3fea', name: 'Admin', desc: 'Manages keys, plans, and users' },
+        { role: 'premium', icon: 'fa-crown', color: '#3b82f6', name: 'Premium', desc: 'Premium cheat loader with all features' },
+        { role: 'free', icon: 'fa-user', color: '#606080', name: 'Free', desc: 'Basic free cheat loader' },
+    ].map(p => `<div class="plan-card" style="text-align:center;padding:28px 20px">
+        <div style="font-size:28px;color:${p.color};margin-bottom:12px"><i class="fas ${p.icon}"></i></div>
+        <h4 style="margin-bottom:4px">${p.name}</h4>
+        <p style="font-size:12px;color:var(--text-3);margin-bottom:12px">${p.desc}</p>
+        <div style="font-size:24px;font-weight:800">${counts[p.role]}</div>
+        <div style="font-size:11px;color:var(--text-3)">users</div>
+    </div>`).join('');
+}
+
+async function savePlanConfig() {
+    const status = document.getElementById('planConfigStatus');
+    const updates = [
+        { key: 'download_premium_url', value: document.getElementById('cfgPremiumUrl').value.trim() },
+        { key: 'download_free_url', value: document.getElementById('cfgFreeUrl').value.trim() },
+        { key: 'version', value: document.getElementById('cfgVersion').value.trim() },
+        { key: 'changelog', value: document.getElementById('cfgChangelog').value.trim() },
+    ];
+    const { error } = await _supabase.from('app_config').upsert(updates, { onConflict: 'key' });
+    if (error) { showStatus(status, error.message, 'error'); return; }
+    showStatus(status, 'Config saved.', 'success');
+}
+
+// ===== USERS =====
+function renderUsers() {
+    const tbody = document.getElementById('usersTableBody');
+    if (!allKeys.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-row"><div class="empty-state"><p>No data</p></div></td></tr>'; return; }
+    const withHwid = allKeys.filter(k => k.hwid);
+    if (!withHwid.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-row"><div class="empty-state"><p>No users have validated yet</p></div></td></tr>'; return; }
+    tbody.innerHTML = withHwid.map(k => {
+        const role = k.role || 'free';
+        return `<tr>
+            <td style="font-size:12px;color:var(--text-3)">—</td>
+            <td><span class="badge badge-${ROLE_COLORS[role]}"><i class="fas ${ROLE_ICONS[role]}"></i> ${role}</span></td>
+            <td class="key-cell" style="font-size:12px">${k.key_value}</td>
+            <td style="font-size:11px;color:var(--text-3)">${k.hwid.substring(0, 20)}...</td>
+            <td><span class="badge badge-green">Active</span></td>
+        </tr>`;
+    }).join('');
+}
+
+// ===== ASSIGN ROLE (Settings) =====
+async function assignRole() {
+    const email = document.getElementById('newAdminEmail').value.trim();
+    const role = document.getElementById('newAdminRole').value;
+    const status = document.getElementById('assignRoleStatus');
+    if (!email) { showStatus(status, 'Enter an email.', 'error'); return; }
+    // This updates the user's app_metadata via Supabase admin API
+    // Note: This requires the service_role key on the server side
+    // For now, provide the SQL they need to run
+    const sql = `UPDATE auth.users SET raw_app_meta_data = raw_app_meta_data || '{"role": "${role}"}'::jsonb WHERE email = '${email}';`;
+    showStatus(status, `Run this in Supabase SQL Editor:\n${sql}`, 'success');
+
+    // Copy to clipboard
+    try { await navigator.clipboard.writeText(sql); } catch {}
 }
 
 // ===== EXPORT =====
 function exportKeys() {
-    if (allKeys.length === 0) { alert('No keys to export.'); return; }
-    const csv = ['Key,Tier,HWID,Created,Expires,Status'];
-    allKeys.forEach(k => {
-        const s = getKeyStatus(k);
-        csv.push(`${k.key_value},${k.tier},${k.hwid || ''},${k.created_at},${k.expires_at || ''},${s.label}`);
-    });
+    if (!allKeys.length) { alert('No keys.'); return; }
+    const csv = ['Key,Role,HWID,Created,Expires,Status'];
+    allKeys.forEach(k => { const s = getKeyStatus(k); csv.push(`${k.key_value},${k.role||'free'},${k.hwid||''},${k.created_at},${k.expires_at||''},${s.label}`); });
     const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'vyron-keys.csv';
-    a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'vyron-keys.csv'; a.click();
 }
 
-// ===== USERS (requires service key on server side) =====
-async function loadUsers() {
-    document.getElementById('usersTableBody').innerHTML =
-        '<tr><td colspan="5" class="empty-row"><div class="empty-state"><i class="fas fa-lock"></i><p>User management requires the API server with service_role key</p></div></td></tr>';
-}
-
-// ===== PUSH UPDATE =====
-async function pushUpdate() {
-    const version = document.getElementById('newVersion').value.trim();
-    const downloadUrl = document.getElementById('newDownloadUrl').value.trim();
-    const changelog = document.getElementById('newChangelog').value.trim();
-    const status = document.getElementById('updateStatus');
-
-    if (!version) { showStatus(status, 'Enter a version number.', 'error'); return; }
-
-    try {
-        const { error } = await _supabase.from('app_config').upsert([
-            { key: 'version', value: version, updated_at: new Date().toISOString() },
-            { key: 'download_url', value: downloadUrl, updated_at: new Date().toISOString() },
-            { key: 'changelog', value: changelog, updated_at: new Date().toISOString() }
-        ]);
-        if (error) { showStatus(status, error.message, 'error'); return; }
-        showStatus(status, 'Updated to v' + version, 'success');
-    } catch (e) {
-        showStatus(status, 'Failed. Make sure app_config table exists.', 'error');
-    }
-}
-
-// ===== HELPERS =====
-function showStatus(el, msg, type) {
-    el.textContent = msg;
-    el.className = 'status-msg ' + type;
-}
+function showStatus(el, msg, type) { el.textContent = msg; el.className = 'status-msg ' + type; }
