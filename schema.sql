@@ -113,6 +113,8 @@ ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users read own profile" ON user_profiles;
 DROP POLICY IF EXISTS "Admins read all profiles" ON user_profiles;
+DROP POLICY IF EXISTS "Users insert own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Users update own profile" ON user_profiles;
 
 CREATE POLICY "Users read own profile"
     ON user_profiles FOR SELECT
@@ -128,39 +130,18 @@ CREATE POLICY "Admins read all profiles"
         )
     );
 
+CREATE POLICY "Users insert own profile"
+    ON user_profiles FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users update own profile"
+    ON user_profiles FOR UPDATE
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
 -- ===================== TRIGGERS =====================
 
--- Auto-create user_profile on signup + assign founder to admin email
-CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
-DECLARE
-    uname TEXT;
-    urole TEXT := 'free';
-    profile_count INTEGER;
-BEGIN
-    uname := COALESCE(
-        NEW.raw_user_meta_data->>'username',
-        split_part(NEW.email, '@', 1)
-    );
-
-    -- First user gets founder
-    SELECT COUNT(*) INTO profile_count FROM user_profiles;
-    IF profile_count = 0 THEN
-        urole := 'founder';
-    END IF;
-
-    INSERT INTO user_profiles (user_id, username, role)
-    VALUES (NEW.id, uname, urole);
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW
-    EXECUTE FUNCTION handle_new_user();
+-- Profile creation handled by JavaScript on signup (more reliable)
 
 -- ===================== DEFAULT DATA =====================
 

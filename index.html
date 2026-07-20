@@ -238,20 +238,48 @@ function handleSignUp() {
 
     sb.auth.signUp({ email: email, password: password, options: { data: { username: username } } })
     .then(function(r) {
+        console.log('SIGNUP RESULT:', JSON.stringify(r));
         if (r.error) {
-            var msg = r.error.message || r.error.error_description || JSON.stringify(r.error) || 'Sign up failed.';
+            var msg = r.error.message || r.error.error_description || 'Sign up failed.';
             if (msg.includes('already')) msg = 'Email already registered.';
             showStatus(status, msg, 'error');
-        } else if (r.data && r.data.user && r.data.user.identities && r.data.user.identities.length === 0) {
-            showStatus(status, 'Email already registered.', 'error');
-        } else {
-            showStatus(status, 'Account created! Switching to sign in...', 'success');
-            setTimeout(function() { showLogin(); showStatus(document.getElementById('loginStatus'), 'Account created. Sign in now.', 'success'); }, 1500);
+            setLoading(btn, false, 'signupBtnText', 'signupSpinner');
+            return;
         }
-        setLoading(btn, false, 'signupBtnText', 'signupSpinner');
+        var user = r.data && r.data.user;
+        if (!user) { showStatus(status, 'Sign up failed - no user returned.', 'error'); setLoading(btn, false, 'signupBtnText', 'signupSpinner'); return; }
+
+        // Check if trigger created profile, if not create it
+        return sb.from('user_profiles').select('user_id').eq('user_id', user.id).maybeSingle()
+        .then(function(profileCheck) {
+            console.log('PROFILE CHECK:', JSON.stringify(profileCheck));
+            if (!profileCheck.data) {
+                return sb.from('user_profiles').insert({ user_id: user.id, username: username, role: 'free' })
+                .then(function() {
+                    return sb.from('user_profiles').select('user_id').limit(1).order('created_at', {ascending: true});
+                })
+                .then(function(firstUser) {
+                    if (firstUser.data && firstUser.data.length === 1 && firstUser.data[0].user_id === user.id) {
+                        return sb.from('user_profiles').update({ role: 'founder' }).eq('user_id', user.id);
+                    }
+                });
+            }
+        })
+        .then(function() {
+            showStatus(status, 'Account created! Signing in...', 'success');
+            setLoading(btn, false, 'signupBtnText', 'signupSpinner');
+            setTimeout(function() { showLogin(); showStatus(document.getElementById('loginStatus'), 'Account created. Sign in now.', 'success'); }, 1500);
+        })
+        .catch(function(e) {
+            console.error('POST-SIGNUP ERROR:', e);
+            showStatus(status, 'Account created but profile setup failed. Try signing in.', 'success');
+            setLoading(btn, false, 'signupBtnText', 'signupSpinner');
+            setTimeout(function() { showLogin(); }, 2000);
+        });
     })
     .catch(function(e) {
-        showStatus(status, 'Error: ' + (e.message || JSON.stringify(e) || 'Unknown error'), 'error');
+        console.error('SIGNUP CATCH:', e);
+        showStatus(status, 'Error: ' + (e.message || JSON.stringify(e) || 'Unknown'), 'error');
         setLoading(btn, false, 'signupBtnText', 'signupSpinner');
     });
 }
