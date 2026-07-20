@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vyron - Admin Panel</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Login overlay -->
+        <div id="adminLogin" class="admin-login-overlay">
+            <div class="card login-card">
+                <div class="logo">
+                    <h1>VYRON</h1>
+                    <p class="tagline">Admin Access</p>
+                </div>
+                <div class="form-group">
+                    <label for="adminEmail">Email</label>
+                    <input type="email" id="adminEmail" placeholder="admin@vyron.com">
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword">Password</label>
+                    <input type="password" id="adminPassword" placeholder="Password">
+                </div>
+                <button id="btnAdminLogin" class="btn btn-primary" onclick="handleAdminLogin()">
+                    <span id="adminLoginText">LOGIN</span>
+                    <div id="adminLoginSpinner" class="spinner hidden"></div>
+                </button>
+                <div id="adminLoginStatus" class="status-msg hidden"></div>
+                <div class="footer-links">
+                    <a href="index.html">Back to Login</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard (hidden until authenticated) -->
+        <div id="adminDashboard" class="hidden">
+            <nav class="admin-nav">
+                <div class="nav-left">
+                    <h2>VYRON <span class="nav-subtitle">Admin</span></h2>
+                </div>
+                <div class="nav-right">
+                    <span id="adminEmailDisplay" class="admin-email"></span>
+                    <button class="btn btn-sm btn-secondary" onclick="handleLogout()">Logout</button>
+                </div>
+            </nav>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-label">Total Keys</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value stat-active" id="statActive">0</div>
+                    <div class="stat-label">Active</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value stat-expired" id="statExpired">0</div>
+                    <div class="stat-label">Expired</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value stat-revoked" id="statRevoked">0</div>
+                    <div class="stat-label">Revoked</div>
+                </div>
+            </div>
+
+            <!-- Create Key -->
+            <div class="card">
+                <h3>Create New Key</h3>
+                <div class="create-form">
+                    <div class="form-row">
+                        <div class="form-group flex-2">
+                            <label>License Key</label>
+                            <div class="input-with-btn">
+                                <input type="text" id="newKey" placeholder="Auto-generated" spellcheck="false">
+                                <button class="btn btn-sm btn-secondary" onclick="generateKey()">Generate</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Tier</label>
+                            <select id="newTier">
+                                <option value="free">Free</option>
+                                <option value="premium" selected>Premium</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Expires</label>
+                            <input type="date" id="newExpiry">
+                        </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="createKey()">Create Key</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="createStatus" class="status-msg hidden"></div>
+            </div>
+
+            <!-- Keys Table -->
+            <div class="card">
+                <div class="table-header">
+                    <h3>License Keys</h3>
+                    <button class="btn btn-sm btn-secondary" onclick="loadKeys()">Refresh</button>
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Key</th>
+                                <th>Tier</th>
+                                <th>HWID</th>
+                                <th>Created</th>
+                                <th>Expires</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="keysTableBody">
+                            <tr><td colspan="7" class="empty-row">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
