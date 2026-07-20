@@ -42,22 +42,35 @@ async function handleValidate() {
 
         const tier = data.tier === 'premium' ? 'Premium' : 'Free';
         const expiry = data.expires_at
-            ? `Expires: ${new Date(data.expires_at).toLocaleDateString()}`
-            : 'Expires: Never';
+            ? new Date(data.expires_at).toLocaleDateString()
+            : 'Never';
 
-        showStatus(status, `Valid — Tier: ${tier} — ${expiry}`, 'success');
+        // Show success state
+        document.querySelector('.login-form').innerHTML = `
+            <div class="success-card">
+                <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+                <h3>Key Verified</h3>
+                <div class="key-display">${data.key_value}</div>
+                <div class="key-details">
+                    <div class="detail"><span>Tier</span><span class="badge badge-${data.tier === 'premium' ? 'purple' : 'yellow'}">${tier}</span></div>
+                    <div class="detail"><span>Expires</span><span>${expiry}</span></div>
+                    <div class="detail"><span>Status</span><span class="badge badge-green">Active</span></div>
+                </div>
+                <p class="success-msg">Open the Vyron Loader on your desktop and paste your key to launch.</p>
+            </div>
+        `;
     } catch (e) {
         showStatus(status, 'Connection error. Please try again later.', 'error');
     } finally {
         btn.disabled = false;
-        btnText.textContent = 'VALIDATE';
+        btnText.textContent = 'Validate Key';
         spinner.classList.add('hidden');
     }
 }
 
 function showStatus(el, message, type) {
     el.textContent = message;
-    el.className = `status-msg ${type}`;
+    el.className = 'status-msg ' + type;
 }
 
 // Enter key support
@@ -68,22 +81,4 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'Enter') handleValidate();
         });
     }
-
-    // Background particles
-    createParticles();
 });
-
-function createParticles() {
-    const container = document.getElementById('particles');
-    if (!container) return;
-
-    for (let i = 0; i < 30; i++) {
-        const p = document.createElement('div');
-        p.className = 'particle';
-        p.style.left = Math.random() * 100 + '%';
-        p.style.top = Math.random() * 100 + '%';
-        p.style.animationDelay = Math.random() * 8 + 's';
-        p.style.animationDuration = (6 + Math.random() * 6) + 's';
-        container.appendChild(p);
-    }
-}

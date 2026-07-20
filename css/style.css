@@ -446,3 +446,25 @@ code {
     .main-content { margin-left: 0; }
     .stats-row { grid-template-columns: 1fr 1fr; }
 }
+
+/* ===== SUCCESS CARD (after validation) ===== */
+.success-card { text-align: center; padding: 8px 0; animation: fadeIn 0.3s; }
+.success-card .success-icon { font-size: 52px; color: var(--green); margin-bottom: 12px; }
+.success-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.success-card .key-display {
+    font-family: 'Courier New', monospace; font-size: 18px; font-weight: 700;
+    color: var(--text); background: var(--bg-3); padding: 10px 20px;
+    border-radius: var(--radius-sm); display: inline-block; margin-bottom: 20px;
+    letter-spacing: 2px; border: 1px solid var(--border);
+}
+.success-card .key-details { margin-bottom: 20px; }
+.success-card .detail {
+    display: flex; justify-content: space-between; padding: 8px 0;
+    border-bottom: 1px solid var(--border); font-size: 13px;
+}
+.success-card .detail span:first-child { color: var(--text-3); }
+.success-card .success-msg {
+    font-size: 13px; color: var(--text-3); line-height: 1.6;
+    background: var(--bg-3); padding: 14px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+}
