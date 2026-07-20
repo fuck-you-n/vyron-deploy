@@ -239,9 +239,11 @@ function handleSignUp() {
     sb.auth.signUp({ email: email, password: password, options: { data: { username: username } } })
     .then(function(r) {
         if (r.error) {
-            var msg = r.error.message || 'Sign up failed.';
+            var msg = r.error.message || r.error.error_description || JSON.stringify(r.error) || 'Sign up failed.';
             if (msg.includes('already')) msg = 'Email already registered.';
             showStatus(status, msg, 'error');
+        } else if (r.data && r.data.user && r.data.user.identities && r.data.user.identities.length === 0) {
+            showStatus(status, 'Email already registered.', 'error');
         } else {
             showStatus(status, 'Account created! Switching to sign in...', 'success');
             setTimeout(function() { showLogin(); showStatus(document.getElementById('loginStatus'), 'Account created. Sign in now.', 'success'); }, 1500);
@@ -249,7 +251,7 @@ function handleSignUp() {
         setLoading(btn, false, 'signupBtnText', 'signupSpinner');
     })
     .catch(function(e) {
-        showStatus(status, 'Connection error: ' + (e.message || e), 'error');
+        showStatus(status, 'Error: ' + (e.message || JSON.stringify(e) || 'Unknown error'), 'error');
         setLoading(btn, false, 'signupBtnText', 'signupSpinner');
     });
 }

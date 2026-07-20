@@ -136,16 +136,16 @@ RETURNS TRIGGER AS $$
 DECLARE
     uname TEXT;
     urole TEXT := 'free';
-    user_count INTEGER;
+    profile_count INTEGER;
 BEGIN
     uname := COALESCE(
         NEW.raw_user_meta_data->>'username',
         split_part(NEW.email, '@', 1)
     );
 
-    -- First user ever gets founder
-    SELECT COUNT(*) INTO user_count FROM auth.users;
-    IF user_count <= 1 THEN
+    -- First user gets founder
+    SELECT COUNT(*) INTO profile_count FROM user_profiles;
+    IF profile_count = 0 THEN
         urole := 'founder';
     END IF;
 
