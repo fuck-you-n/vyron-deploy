@@ -192,97 +192,149 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js"></script>
     <script>
-    let currentUser = null;
-    let currentProfile = null;
-    let currentKeyData = null;
+    // Load Supabase CDN dynamically so it never blocks
+    (function loadSupabase() {
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+        s.onload = function() { initApp(); };
+        s.onerror = function() { console.error('Failed to load Supabase SDK'); initApp(); };
+        document.head.appendChild(s);
+    })();
 
-    // ==================== AUTH ====================
-    async function handleSignUp() {
-        const username = document.getElementById('signupUsername').value.trim();
-        const email = document.getElementById('signupEmail').value.trim();
-        const password = document.getElementById('signupPassword').value;
-        const status = document.getElementById('signupStatus');
-        const btn = document.getElementById('btnSignup');
+    var _supabase = null;
+
+    function initApp() {
+        try {
+            if (typeof supabase !== 'undefined') {
+                _supabase = supabase.createClient(
+                    'https://ktpydnabvffzybewsxgu.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0cHlkbmFidmZmenliZXdzeGd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NzM2NzcsImV4cCI6MjEwMDE0OTY3N30.hA6gpgsYDZATUinm4ogyODmGdt9lyDO66kUmTHwjsiM'
+                );
+            }
+        } catch(e) { console.error('Supabase init error:', e); }
+
+        try {
+            if (_supabase) {
+                _supabase.auth.onAuthStateChange(function(event, session) {
+                    if (session && session.user) { loadDashboard(session.user); }
+                    else if (event === 'SIGNED_OUT') { currentUser = null; currentProfile = null; currentKeyData = null; }
+                });
+                _supabase.auth.getSession().then(function(result) {
+                    if (result.data && result.data.session && result.data.session.user) {
+                        loadDashboard(result.data.session.user);
+                    }
+                });
+            }
+        } catch(e) { console.error('Supabase auth init failed:', e); }
+    }
+
+    var currentUser = null;
+    var currentProfile = null;
+    var currentKeyData = null;
+
+    function showSignUp() {
+        document.getElementById('loginCard').classList.add('hidden');
+        document.getElementById('signupCard').classList.remove('hidden');
+    }
+    function showLogin() {
+        document.getElementById('loginCard').classList.remove('hidden');
+        document.getElementById('signupCard').classList.add('hidden');
+    }
+    function showStatus(el, msg, type) { el.textContent = msg; el.className = 'status-msg ' + type; }
+    function showKeyStatus(el, msg, type) { el.textContent = msg; el.className = (type === 'error' ? 'error-text' : 'success-text'); el.classList.remove('hidden'); }
+    function setLoading(btn, loading, textId, spinnerId) {
+        btn.disabled = loading;
+        document.getElementById(textId).textContent = loading ? 'Please wait...' : (textId === 'loginBtnText' ? 'Sign In' : 'Create Account');
+        document.getElementById(spinnerId).classList.toggle('hidden', !loading);
+    }
+
+    function requireSupabase() {
+        if (!_supabase) { alert('Still loading. Please try again in a moment.'); return false; }
+        return true;
+    }
+
+    function handleSignUp() {
+        var username = document.getElementById('signupUsername').value.trim();
+        var email = document.getElementById('signupEmail').value.trim();
+        var password = document.getElementById('signupPassword').value;
+        var status = document.getElementById('signupStatus');
+        var btn = document.getElementById('btnSignup');
 
         if (!username || !email || !password) { showStatus(status, 'All fields required.', 'error'); return; }
         if (username.length < 3) { showStatus(status, 'Username must be 3+ characters.', 'error'); return; }
         if (password.length < 6) { showStatus(status, 'Password must be 6+ characters.', 'error'); return; }
         if (!/^[a-zA-Z0-9_]+$/.test(username)) { showStatus(status, 'Username: letters, numbers, underscore only.', 'error'); return; }
+        if (!requireSupabase()) return;
 
         setLoading(btn, true, 'signupBtnText', 'signupSpinner');
-        try {
-            const { data: existing } = await _supabase.from('user_profiles').select('user_id').eq('username', username).maybeSingle();
-            if (existing) { showStatus(status, 'Username already taken.', 'error'); return; }
-
-            const { data, error } = await _supabase.auth.signUp({
-                email, password,
-                options: { data: { username } }
-            });
-            if (error) { showStatus(status, error.message, 'error'); return; }
-
-            showStatus(status, 'Account created! Signing in...', 'success');
-            setTimeout(() => { showLogin(); showStatus(document.getElementById('loginStatus'), 'Account created. Sign in.', 'success'); }, 1000);
-        } catch (e) { showStatus(status, 'Connection error.', 'error'); }
-        finally { setLoading(btn, false, 'signupBtnText', 'signupSpinner'); }
+        _supabase.from('user_profiles').select('user_id').eq('username', username).maybeSingle()
+            .then(function(existing) {
+                if (existing.data) { showStatus(status, 'Username already taken.', 'error'); setLoading(btn, false, 'signupBtnText', 'signupSpinner'); return; }
+                return _supabase.auth.signUp({ email: email, password: password, options: { data: { username: username } } });
+            })
+            .then(function(result) {
+                if (!result) return;
+                if (result.error) { showStatus(status, result.error.message, 'error'); setLoading(btn, false, 'signupBtnText', 'signupSpinner'); return; }
+                showStatus(status, 'Account created! Signing in...', 'success');
+                setTimeout(function() { showLogin(); showStatus(document.getElementById('loginStatus'), 'Account created. Sign in.', 'success'); }, 1000);
+                setLoading(btn, false, 'signupBtnText', 'signupSpinner');
+            })
+            .catch(function(e) { showStatus(status, 'Connection error.', 'error'); setLoading(btn, false, 'signupBtnText', 'signupSpinner'); });
     }
 
-    async function handleSignIn() {
-        const email = document.getElementById('loginEmail').value.trim();
-        const password = document.getElementById('loginPassword').value;
-        const status = document.getElementById('loginStatus');
-        const btn = document.getElementById('btnLogin');
+    function handleSignIn() {
+        var email = document.getElementById('loginEmail').value.trim();
+        var password = document.getElementById('loginPassword').value;
+        var status = document.getElementById('loginStatus');
+        var btn = document.getElementById('btnLogin');
 
         if (!email || !password) { showStatus(status, 'Enter email and password.', 'error'); return; }
+        if (!requireSupabase()) return;
 
         setLoading(btn, true, 'loginBtnText', 'loginSpinner');
-        try {
-            const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
-            if (error) { showStatus(status, error.message, 'error'); return; }
-            // session listener handles the rest
-        } catch (e) { showStatus(status, 'Connection error.', 'error'); }
-        finally { setLoading(btn, false, 'loginBtnText', 'loginSpinner'); }
+        _supabase.auth.signInWithPassword({ email: email, password: password })
+            .then(function(result) {
+                if (result.error) { showStatus(status, result.error.message, 'error'); }
+            })
+            .catch(function(e) { showStatus(status, 'Connection error.', 'error'); })
+            .finally(function() { setLoading(btn, false, 'loginBtnText', 'loginSpinner'); });
     }
 
-    async function handleSignOut() {
-        await _supabase.auth.signOut();
-        currentUser = null; currentProfile = null; currentKeyData = null;
-        document.getElementById('dashboardView').classList.add('hidden');
-        document.getElementById('authView').classList.remove('hidden');
-        showLogin();
+    function handleSignOut() {
+        if (!_supabase) return;
+        _supabase.auth.signOut().then(function() {
+            currentUser = null; currentProfile = null; currentKeyData = null;
+            document.getElementById('dashboardView').classList.add('hidden');
+            document.getElementById('authView').classList.remove('hidden');
+            showLogin();
+        });
     }
 
-    // ==================== DASHBOARD ====================
-    async function loadDashboard(user) {
+    function loadDashboard(user) {
         currentUser = user;
         document.getElementById('authView').classList.add('hidden');
         document.getElementById('dashboardView').classList.remove('hidden');
 
-        // Fetch profile
-        const { data: profile } = await _supabase.from('user_profiles').select('*').eq('user_id', user.id).single();
-        currentProfile = profile;
+        _supabase.from('user_profiles').select('*').eq('user_id', user.id).single()
+            .then(function(result) {
+                currentProfile = result.data;
+                var role = (currentProfile && currentProfile.role) || 'free';
+                document.getElementById('dashUsername').textContent = '@' + ((currentProfile && currentProfile.username) || 'user');
+                document.getElementById('dashEmail').textContent = user.email;
+                document.getElementById('dashRole').textContent = role.toUpperCase();
+                document.getElementById('dashJoined').textContent = new Date(user.created_at).toLocaleDateString();
+                var badge = document.getElementById('dashRoleBadge');
+                badge.textContent = role.toUpperCase();
+                badge.className = 'role-badge role-' + role;
 
-        const role = profile?.role || 'free';
-        document.getElementById('dashUsername').textContent = '@' + (profile?.username || 'user');
-        document.getElementById('dashEmail').textContent = user.email;
-        document.getElementById('dashRole').textContent = role.toUpperCase();
-        document.getElementById('dashJoined').textContent = new Date(user.created_at).toLocaleDateString();
-
-        const badge = document.getElementById('dashRoleBadge');
-        badge.textContent = role.toUpperCase();
-        badge.className = 'role-badge role-' + role;
-
-        // Check for linked key
-        const { data: keyData } = await _supabase.from('license_keys')
-            .select('*').eq('user_id', user.id).maybeSingle();
-
-        if (keyData) {
-            showLinkedKey(keyData);
-        } else {
-            showKeyEntry();
-        }
+                return _supabase.from('license_keys').select('*').eq('user_id', user.id).maybeSingle();
+            })
+            .then(function(result) {
+                if (result && result.data) { showLinkedKey(result.data); }
+                else { showKeyEntry(); }
+            })
+            .catch(function(e) { console.error('Dashboard load error:', e); showKeyEntry(); });
     }
 
     function showKeyEntry() {
@@ -303,102 +355,81 @@
         document.getElementById('linkedKeyExpiry').textContent = keyData.expires_at
             ? 'Expires: ' + new Date(keyData.expires_at).toLocaleDateString() : 'Expires: Never';
 
-        // Download section
-        const role = currentProfile?.role || keyData.role || 'free';
-        const isPremiumOrAbove = ['premium', 'admin', 'founder'].includes(role);
-
-        const icon = document.getElementById('dashIcon');
-        const title = document.getElementById('dashTitle');
-        const desc = document.getElementById('dashDesc');
+        var role = (currentProfile && currentProfile.role) || keyData.role || 'free';
+        var isPremiumOrAbove = ['premium', 'admin', 'founder'].indexOf(role) !== -1;
+        var icon = document.getElementById('dashIcon');
+        var title = document.getElementById('dashTitle');
+        var desc = document.getElementById('dashDesc');
 
         if (isPremiumOrAbove) {
             icon.innerHTML = '<i class="fas fa-crown" style="color:#3b82f6"></i>';
             title.textContent = 'Premium Loader';
-            desc.textContent = 'Full access — aimbot, silent aim, chams, ESP, all features.';
+            desc.textContent = 'Full access \u2014 aimbot, silent aim, chams, ESP, all features.';
         } else {
             icon.innerHTML = '<i class="fas fa-download" style="color:var(--text-3)"></i>';
             title.textContent = 'Free Loader';
-            desc.textContent = 'Basic features — ESP and basic aimbot.';
+            desc.textContent = 'Basic features \u2014 ESP and basic aimbot.';
         }
 
-        // Fetch download config
-        const { data: config } = await _supabase.from('app_config').select('*');
-        const cfg = {};
-        if (config) config.forEach(r => cfg[r.key] = r.value);
-
-        document.getElementById('dashVersion').textContent = 'v' + (cfg.version || '1.0.0');
-        document.getElementById('dashChangelog').textContent = cfg.changelog || 'No changelog available.';
-
-        const dlUrl = isPremiumOrAbove ? cfg.download_premium_url : cfg.download_free_url;
-        const btn = document.getElementById('dashDownloadBtn');
-        if (dlUrl) { btn.href = dlUrl; btn.classList.remove('disabled'); }
-        else { btn.href = '#'; btn.classList.add('disabled'); btn.innerHTML = '<i class="fas fa-clock"></i> Coming Soon'; }
+        _supabase.from('app_config').select('*').then(function(result) {
+            var cfg = {};
+            if (result.data) result.data.forEach(function(r) { cfg[r.key] = r.value; });
+            document.getElementById('dashVersion').textContent = 'v' + (cfg.version || '1.0.0');
+            document.getElementById('dashChangelog').textContent = cfg.changelog || 'No changelog available.';
+            var dlUrl = isPremiumOrAbove ? cfg.download_premium_url : cfg.download_free_url;
+            var btn = document.getElementById('dashDownloadBtn');
+            if (dlUrl) { btn.href = dlUrl; btn.classList.remove('disabled'); btn.innerHTML = '<i class="fas fa-download"></i> Download Loader'; }
+            else { btn.href = '#'; btn.classList.add('disabled'); btn.innerHTML = '<i class="fas fa-clock"></i> Coming Soon'; }
+        });
     }
 
-    async function handleLinkKey() {
-        const input = document.getElementById('licenseKeyInput');
-        const status = document.getElementById('keyEntryStatus');
-        const keyValue = input.value.trim().toUpperCase();
+    function handleLinkKey() {
+        var input = document.getElementById('licenseKeyInput');
+        var status = document.getElementById('keyEntryStatus');
+        var keyValue = input.value.trim().toUpperCase();
         if (!keyValue) { showKeyStatus(status, 'Enter a license key.', 'error'); return; }
+        if (!requireSupabase()) return;
 
-        try {
-            // Find the key
-            const { data: key, error } = await _supabase.from('license_keys')
-                .select('*').eq('key_value', keyValue).single();
-            if (error || !key) { showKeyStatus(status, 'Key not found.', 'error'); return; }
-            if (!key.is_active) { showKeyStatus(status, 'Key has been revoked.', 'error'); return; }
-            if (key.expires_at && new Date(key.expires_at) < new Date()) { showKeyStatus(status, 'Key has expired.', 'error'); return; }
-            if (key.user_id && key.user_id !== currentUser.id) { showKeyStatus(status, 'Key is linked to another account.', 'error'); return; }
+        _supabase.from('license_keys').select('*').eq('key_value', keyValue).single()
+            .then(function(result) {
+                var key = result.data;
+                var error = result.error;
+                if (error || !key) { showKeyStatus(status, 'Key not found.', 'error'); return; }
+                if (!key.is_active) { showKeyStatus(status, 'Key has been revoked.', 'error'); return; }
+                if (key.expires_at && new Date(key.expires_at) < new Date()) { showKeyStatus(status, 'Key has expired.', 'error'); return; }
+                if (key.user_id && key.user_id !== currentUser.id) { showKeyStatus(status, 'Key is linked to another account.', 'error'); return; }
 
-            // Link key to account
-            const { error: updateErr } = await _supabase.from('license_keys')
-                .update({ user_id: currentUser.id }).eq('key_value', keyValue);
-            if (updateErr) { showKeyStatus(status, 'Failed to link key.', 'error'); return; }
-
-            // If user doesn't have a role from key yet, apply it
-            if (key.role && key.role !== 'free' && currentProfile?.role === 'free') {
-                await _supabase.from('user_profiles').update({ role: key.role }).eq('user_id', currentUser.id);
-                currentProfile.role = key.role;
-            }
-
-            showKeyStatus(status, 'Key linked!', 'success');
-            const { data: updatedKey } = await _supabase.from('license_keys').select('*').eq('key_value', keyValue).single();
-            setTimeout(() => showLinkedKey(updatedKey), 500);
-        } catch (e) { showKeyStatus(status, 'Connection error.', 'error'); }
+                return _supabase.from('license_keys').update({ user_id: currentUser.id }).eq('key_value', keyValue);
+            })
+            .then(function(result) {
+                if (result && result.error) { showKeyStatus(status, 'Failed to link key.', 'error'); return; }
+                if (result) showKeyStatus(status, 'Key linked!', 'success');
+                return _supabase.from('license_keys').select('*').eq('key_value', keyValue).single();
+            })
+            .then(function(result) {
+                if (result && result.data) {
+                    if (result.data.role && result.data.role !== 'free' && currentProfile && currentProfile.role === 'free') {
+                        _supabase.from('user_profiles').update({ role: result.data.role }).eq('user_id', currentUser.id)
+                            .then(function() { currentProfile.role = result.data.role; });
+                    }
+                    setTimeout(function() { showLinkedKey(result.data); }, 500);
+                }
+            })
+            .catch(function(e) { showKeyStatus(status, 'Connection error.', 'error'); });
     }
 
-    async function handleUnlinkKey() {
-        if (!currentKeyData) return;
-        try {
-            await _supabase.from('license_keys').update({ user_id: null }).eq('key_value', currentKeyData.key_value);
-            currentKeyData = null;
-            showKeyEntry();
-        } catch (e) {}
+    function handleUnlinkKey() {
+        if (!currentKeyData || !_supabase) return;
+        _supabase.from('license_keys').update({ user_id: null }).eq('key_value', currentKeyData.key_value)
+            .then(function() { currentKeyData = null; showKeyEntry(); });
     }
 
-    // ==================== UI HELPERS ====================
-    function showLogin() {
-        document.getElementById('loginCard').classList.remove('hidden');
-        document.getElementById('signupCard').classList.add('hidden');
-    }
-    function showSignUp() {
-        document.getElementById('loginCard').classList.add('hidden');
-        document.getElementById('signupCard').classList.remove('hidden');
-    }
-    function showStatus(el, msg, type) { el.textContent = msg; el.className = 'status-msg ' + type; }
-    function showKeyStatus(el, msg, type) { el.textContent = msg; el.className = (type === 'error' ? 'error-text' : 'success-text'); el.classList.remove('hidden'); }
-    function setLoading(btn, loading, textId, spinnerId) {
-        btn.disabled = loading;
-        document.getElementById(textId).textContent = loading ? 'Please wait...' : (textId === 'loginBtnText' ? 'Sign In' : 'Create Account');
-        document.getElementById(spinnerId).classList.toggle('hidden', !loading);
-    }
-
-    // ==================== INIT ====================
-    function initParticles() {
-        const c = document.getElementById('particles');
-        if (!c || c.querySelectorAll('.dot').length > 0) return;
-        for (let i = 0; i < 25; i++) {
-            const d = document.createElement('div');
+    // Particles
+    (function() {
+        var c = document.getElementById('particles');
+        if (!c) return;
+        for (var i = 0; i < 25; i++) {
+            var d = document.createElement('div');
             d.className = 'dot';
             d.style.left = Math.random()*100+'%';
             d.style.top = Math.random()*100+'%';
@@ -406,28 +437,15 @@
             d.style.animationDuration = (6+Math.random()*6)+'s';
             c.appendChild(d);
         }
-    }
+    })();
 
-    function initKeybinds() {
-        ['loginEmail','loginPassword'].forEach(id => document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') handleSignIn(); }));
-        ['signupUsername','signupEmail','signupPassword'].forEach(id => document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') handleSignUp(); }));
-        document.getElementById('licenseKeyInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') handleLinkKey(); });
-    }
-
-    try {
-        _supabase.auth.onAuthStateChange((event, session) => {
-            if (session?.user) { loadDashboard(session.user); }
-            else if (event === 'SIGNED_OUT') { currentUser = null; currentProfile = null; currentKeyData = null; }
-        });
-
-        (async () => {
-            const { data: { session } } = await _supabase.auth.getSession();
-            if (session?.user) loadDashboard(session.user);
-        })();
-    } catch(e) { console.error('Supabase init failed:', e); }
-
-    initParticles();
-    initKeybinds();
+    // Enter key handlers
+    document.getElementById('loginEmail') && document.getElementById('loginEmail').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSignIn(); });
+    document.getElementById('loginPassword') && document.getElementById('loginPassword').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSignIn(); });
+    document.getElementById('signupUsername') && document.getElementById('signupUsername').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSignUp(); });
+    document.getElementById('signupEmail') && document.getElementById('signupEmail').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSignUp(); });
+    document.getElementById('signupPassword') && document.getElementById('signupPassword').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSignUp(); });
+    document.getElementById('licenseKeyInput') && document.getElementById('licenseKeyInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleLinkKey(); });
     </script>
 </body>
 </html>

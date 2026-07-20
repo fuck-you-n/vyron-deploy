@@ -11,10 +11,16 @@ const ROLE_ICONS = { founder: 'fa-star', admin: 'fa-shield', premium: 'fa-crown'
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', async () => {
-    const { data } = await _supabase.auth.getSession();
+    // Wait for Supabase to load
+    for (let i = 0; i < 50; i++) {
+        if (window._supabase) break;
+        await new Promise(r => setTimeout(r, 200));
+    }
+    if (!window._supabase) { alert('Failed to load Supabase. Refresh the page.'); return; }
+    window._supabase = window._supabase; // ensure window._supabase alias works
+    const { data } = await window._supabase.auth.getSession();
     if (data.session) {
-        // Check role from user_profiles (not app_metadata)
-        const { data: profile } = await _supabase.from('user_profiles').select('*').eq('user_id', data.session.user.id).single();
+        const { data: profile } = await window._supabase.from('user_profiles').select('*').eq('user_id', data.session.user.id).single();
         if (profile && ROLE_HIERARCHY[profile.role] >= ROLE_HIERARCHY['admin']) {
             currentSession = data.session;
             currentProfile = profile;
@@ -66,14 +72,14 @@ async function handleAdminLogin() {
     if (!email || !password) { showStatus(status, 'Enter credentials.', 'error'); return; }
     btn.disabled = true; btnText.textContent = 'Signing in...'; spinner.classList.remove('hidden'); status.classList.add('hidden');
     try {
-        const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await window._supabase.auth.signInWithPassword({ email, password });
         if (error) { showStatus(status, error.message, 'error'); return; }
 
         // Check role from user_profiles
-        const { data: profile } = await _supabase.from('user_profiles').select('*').eq('user_id', data.user.id).single();
+        const { data: profile } = await window._supabase.from('user_profiles').select('*').eq('user_id', data.user.id).single();
         if (!profile || ROLE_HIERARCHY[profile.role] < ROLE_HIERARCHY['admin']) {
             showStatus(status, 'Access denied — admin role required.', 'error');
-            await _supabase.auth.signOut(); return;
+            await window._supabase.auth.signOut(); return;
         }
         currentSession = data.session; currentProfile = profile;
         showDashboard();
@@ -81,7 +87,7 @@ async function handleAdminLogin() {
     finally { btn.disabled = false; btnText.textContent = 'Sign In'; spinner.classList.add('hidden'); }
 }
 async function handleLogout() {
-    await _supabase.auth.signOut(); currentSession = null; currentProfile = null;
+    await window._supabase.auth.signOut(); currentSession = null; currentProfile = null;
     document.getElementById('adminDashboard').classList.add('hidden');
     document.getElementById('adminLogin').classList.remove('hidden');
 }
@@ -98,14 +104,14 @@ async function loadAllData() {
 }
 
 async function loadKeys() {
-    const { data, error } = await _supabase.from('license_keys').select('*').order('created_at', { ascending: false });
+    const { data, error } = await window._supabase.from('license_keys').select('*').order('created_at', { ascending: false });
     if (error) { console.error(error); return; }
     allKeys = data || [];
     updateStats(); renderKeys(); renderRoleBreakdown();
 }
 
 async function loadProfiles() {
-    const { data, error } = await _supabase.from('user_profiles').select('*').order('created_at', { ascending: false });
+    const { data, error } = await window._supabase.from('user_profiles').select('*').order('created_at', { ascending: false });
     if (error) { console.error(error); return; }
     allProfiles = data || [];
 }
@@ -188,9 +194,9 @@ function updateBulkActions() {
     document.getElementById('selectedCount').textContent = c.length + ' selected';
 }
 function getSelectedIds() { return Array.from(document.querySelectorAll('.key-check:checked')).map(c => c.value); }
-async function bulkRole(role) { for (const id of getSelectedIds()) await _supabase.from('license_keys').update({ role }).eq('id', id); await loadKeys(); }
-async function bulkRevoke() { for (const id of getSelectedIds()) await _supabase.from('license_keys').update({ is_active: false }).eq('id', id); await loadKeys(); }
-async function bulkDelete() { if (!confirm('Delete selected?')) return; for (const id of getSelectedIds()) await _supabase.from('license_keys').delete().eq('id', id); await loadKeys(); }
+async function bulkRole(role) { for (const id of getSelectedIds()) await window._supabase.from('license_keys').update({ role }).eq('id', id); await loadKeys(); }
+async function bulkRevoke() { for (const id of getSelectedIds()) await window._supabase.from('license_keys').update({ is_active: false }).eq('id', id); await loadKeys(); }
+async function bulkDelete() { if (!confirm('Delete selected?')) return; for (const id of getSelectedIds()) await window._supabase.from('license_keys').delete().eq('id', id); await loadKeys(); }
 
 // ===== KEY CRUD =====
 function generateKey() {
@@ -213,15 +219,15 @@ async function createKey() {
     if (!key) { showStatus(status, 'Enter or generate a key.', 'error'); return; }
     const payload = { key_value: key, role, is_active: true };
     if (expiry) payload.expires_at = new Date(expiry).toISOString();
-    const { error } = await _supabase.from('license_keys').insert(payload);
+    const { error } = await window._supabase.from('license_keys').insert(payload);
     if (error) { showStatus(status, error.message, 'error'); return; }
     showStatus(status, 'Created: ' + key, 'success');
     await loadKeys(); setTimeout(closeCreateModal, 1000);
 }
 
-async function revokeKey(id) { await _supabase.from('license_keys').update({ is_active: false }).eq('id', id); await loadKeys(); }
-async function activateKey(id) { await _supabase.from('license_keys').update({ is_active: true }).eq('id', id); await loadKeys(); }
-async function deleteKey(id) { if (!confirm('Delete permanently?')) return; await _supabase.from('license_keys').delete().eq('id', id); await loadKeys(); }
+async function revokeKey(id) { await window._supabase.from('license_keys').update({ is_active: false }).eq('id', id); await loadKeys(); }
+async function activateKey(id) { await window._supabase.from('license_keys').update({ is_active: true }).eq('id', id); await loadKeys(); }
+async function deleteKey(id) { if (!confirm('Delete permanently?')) return; await window._supabase.from('license_keys').delete().eq('id', id); await loadKeys(); }
 
 // ===== EDIT ROLE MODAL =====
 function openEditRole(id, keyVal, currentRole) {
@@ -236,7 +242,7 @@ async function saveEditRole() {
     const role = document.getElementById('editRoleSelect').value;
     const status = document.getElementById('editRoleStatus');
     if (!editingKeyId) return;
-    const { error } = await _supabase.from('license_keys').update({ role }).eq('id', editingKeyId);
+    const { error } = await window._supabase.from('license_keys').update({ role }).eq('id', editingKeyId);
     if (error) { showStatus(status, error.message, 'error'); return; }
     showStatus(status, 'Role updated to ' + role, 'success');
     await loadKeys(); setTimeout(closeEditRoleModal, 800);
@@ -244,7 +250,7 @@ async function saveEditRole() {
 
 // ===== PLANS / CONFIG =====
 async function loadPlanConfig() {
-    const { data } = await _supabase.from('app_config').select('*');
+    const { data } = await window._supabase.from('app_config').select('*');
     if (!data) return;
     const map = {}; data.forEach(r => map[r.key] = r.value);
     document.getElementById('cfgPremiumUrl').value = map['download_premium_url'] || '';
@@ -277,7 +283,7 @@ async function savePlanConfig() {
         { key: 'version', value: document.getElementById('cfgVersion').value.trim() },
         { key: 'changelog', value: document.getElementById('cfgChangelog').value.trim() },
     ];
-    const { error } = await _supabase.from('app_config').upsert(updates, { onConflict: 'key' });
+    const { error } = await window._supabase.from('app_config').upsert(updates, { onConflict: 'key' });
     if (error) { showStatus(status, error.message, 'error'); return; }
     showStatus(status, 'Config saved.', 'success');
 }
@@ -285,12 +291,12 @@ async function savePlanConfig() {
 // ===== USERS (from user_profiles + license_keys) =====
 async function loadUsers() {
     // Fetch user profiles with their linked keys
-    const { data: profiles, error: pErr } = await _supabase.from('user_profiles').select('*').order('created_at', { ascending: false });
+    const { data: profiles, error: pErr } = await window._supabase.from('user_profiles').select('*').order('created_at', { ascending: false });
     if (pErr) { console.error(pErr); return; }
     allProfiles = profiles || [];
 
     // Fetch all keys to find linked ones
-    const { data: keys } = await _supabase.from('license_keys').select('*');
+    const { data: keys } = await window._supabase.from('license_keys').select('*');
     const keyMap = {};
     (keys || []).forEach(k => { if (k.user_id) keyMap[k.user_id] = k; });
 
