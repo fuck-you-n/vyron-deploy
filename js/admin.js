@@ -1,5 +1,7 @@
 let currentSession = null;
+let currentProfile = null;
 let allKeys = [];
+let allProfiles = [];
 let currentFilter = 'all';
 let editingKeyId = null;
 
@@ -11,11 +13,11 @@ const ROLE_ICONS = { founder: 'fa-star', admin: 'fa-shield', premium: 'fa-crown'
 document.addEventListener('DOMContentLoaded', async () => {
     const { data } = await _supabase.auth.getSession();
     if (data.session) {
-        const userMeta = data.session.user?.app_metadata || {};
-        const role = userMeta.role || 'admin';
-        if (ROLE_HIERARCHY[role] >= ROLE_HIERARCHY['admin']) {
+        // Check role from user_profiles (not app_metadata)
+        const { data: profile } = await _supabase.from('user_profiles').select('*').eq('user_id', data.session.user.id).single();
+        if (profile && ROLE_HIERARCHY[profile.role] >= ROLE_HIERARCHY['admin']) {
             currentSession = data.session;
-            currentSession.userRole = role;
+            currentProfile = profile;
             showDashboard();
         }
     }
@@ -26,7 +28,7 @@ function showDashboard() {
     document.getElementById('adminDashboard').classList.remove('hidden');
     document.getElementById('adminEmailDisplay').textContent = currentSession.user.email;
 
-    const role = currentSession.userRole;
+    const role = currentProfile?.role || 'admin';
     const roleBadge = document.getElementById('adminRoleDisplay');
     roleBadge.textContent = role.charAt(0).toUpperCase() + role.slice(1);
     roleBadge.className = 'admin-role role-' + role;
@@ -49,7 +51,7 @@ function showSection(name) {
     document.getElementById('pageTitle').textContent = titles[name] || name;
     document.querySelectorAll('.nav-item').forEach(n => { if (n.querySelector('span')?.textContent.toLowerCase() === name) n.classList.add('active'); });
     if (name === 'plans') loadPlanConfig();
-    if (name === 'users') renderUsers();
+    if (name === 'users') loadUsers();
 }
 function toggleSidebar() { document.querySelector('.sidebar').classList.toggle('open'); }
 
@@ -66,18 +68,20 @@ async function handleAdminLogin() {
     try {
         const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
         if (error) { showStatus(status, error.message, 'error'); return; }
-        const role = data.user?.app_metadata?.role;
-        if (!role || ROLE_HIERARCHY[role] < ROLE_HIERARCHY['admin']) {
+
+        // Check role from user_profiles
+        const { data: profile } = await _supabase.from('user_profiles').select('*').eq('user_id', data.user.id).single();
+        if (!profile || ROLE_HIERARCHY[profile.role] < ROLE_HIERARCHY['admin']) {
             showStatus(status, 'Access denied — admin role required.', 'error');
             await _supabase.auth.signOut(); return;
         }
-        currentSession = data.session; currentSession.userRole = role;
+        currentSession = data.session; currentProfile = profile;
         showDashboard();
     } catch (e) { showStatus(status, 'Login failed.', 'error'); }
     finally { btn.disabled = false; btnText.textContent = 'Sign In'; spinner.classList.add('hidden'); }
 }
 async function handleLogout() {
-    await _supabase.auth.signOut(); currentSession = null;
+    await _supabase.auth.signOut(); currentSession = null; currentProfile = null;
     document.getElementById('adminDashboard').classList.add('hidden');
     document.getElementById('adminLogin').classList.remove('hidden');
 }
@@ -89,13 +93,21 @@ function togglePassword() {
 }
 
 // ===== DATA =====
-async function loadAllData() { await loadKeys(); }
+async function loadAllData() {
+    await Promise.all([loadKeys(), loadProfiles()]);
+}
 
 async function loadKeys() {
     const { data, error } = await _supabase.from('license_keys').select('*').order('created_at', { ascending: false });
     if (error) { console.error(error); return; }
     allKeys = data || [];
     updateStats(); renderKeys(); renderRoleBreakdown();
+}
+
+async function loadProfiles() {
+    const { data, error } = await _supabase.from('user_profiles').select('*').order('created_at', { ascending: false });
+    if (error) { console.error(error); return; }
+    allProfiles = data || [];
 }
 
 function updateStats() {
@@ -270,20 +282,45 @@ async function savePlanConfig() {
     showStatus(status, 'Config saved.', 'success');
 }
 
-// ===== USERS =====
-function renderUsers() {
+// ===== USERS (from user_profiles + license_keys) =====
+async function loadUsers() {
+    // Fetch user profiles with their linked keys
+    const { data: profiles, error: pErr } = await _supabase.from('user_profiles').select('*').order('created_at', { ascending: false });
+    if (pErr) { console.error(pErr); return; }
+    allProfiles = profiles || [];
+
+    // Fetch all keys to find linked ones
+    const { data: keys } = await _supabase.from('license_keys').select('*');
+    const keyMap = {};
+    (keys || []).forEach(k => { if (k.user_id) keyMap[k.user_id] = k; });
+
+    renderUsers(keyMap);
+}
+
+function renderUsers(keyMap) {
     const tbody = document.getElementById('usersTableBody');
-    if (!allKeys.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-row"><div class="empty-state"><p>No data</p></div></td></tr>'; return; }
-    const withHwid = allKeys.filter(k => k.hwid);
-    if (!withHwid.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-row"><div class="empty-state"><p>No users have validated yet</p></div></td></tr>'; return; }
-    tbody.innerHTML = withHwid.map(k => {
-        const role = k.role || 'free';
+    keyMap = keyMap || {};
+
+    if (!allProfiles.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-row"><div class="empty-state"><p>No registered users</p></div></td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = allProfiles.map(p => {
+        const role = p.role || 'free';
+        const linkedKey = keyMap[p.user_id];
+        const keyDisplay = linkedKey ? linkedKey.key_value : '—';
+        const keyStatus = linkedKey ? (linkedKey.is_active ? 'Active' : 'Revoked') : 'No key';
+        const keyColor = linkedKey ? (linkedKey.is_active ? 'green' : 'red') : 'yellow';
+        const joined = new Date(p.created_at).toLocaleDateString();
+
         return `<tr>
+            <td style="font-weight:600">@${p.username}</td>
             <td style="font-size:12px;color:var(--text-3)">—</td>
-            <td><span class="badge badge-${ROLE_COLORS[role]}"><i class="fas ${ROLE_ICONS[role]}"></i> ${role}</span></td>
-            <td class="key-cell" style="font-size:12px">${k.key_value}</td>
-            <td style="font-size:11px;color:var(--text-3)">${k.hwid.substring(0, 20)}...</td>
-            <td><span class="badge badge-green">Active</span></td>
+            <td><span class="badge badge-${ROLE_COLORS[role]}" onclick="openEditRole(null,'${p.username}','${role}')" style="cursor:pointer"><i class="fas ${ROLE_ICONS[role]}"></i> ${role}</span></td>
+            <td class="key-cell" style="font-size:12px">${keyDisplay}</td>
+            <td><span class="badge badge-${keyColor}">${keyStatus}</span></td>
+            <td>${joined}</td>
         </tr>`;
     }).join('');
 }
@@ -294,13 +331,11 @@ async function assignRole() {
     const role = document.getElementById('newAdminRole').value;
     const status = document.getElementById('assignRoleStatus');
     if (!email) { showStatus(status, 'Enter an email.', 'error'); return; }
-    // This updates the user's app_metadata via Supabase admin API
-    // Note: This requires the service_role key on the server side
-    // For now, provide the SQL they need to run
-    const sql = `UPDATE auth.users SET raw_app_meta_data = raw_app_meta_data || '{"role": "${role}"}'::jsonb WHERE email = '${email}';`;
-    showStatus(status, `Run this in Supabase SQL Editor:\n${sql}`, 'success');
 
-    // Copy to clipboard
+    // Find user by email via auth.users (needs service_role, but we can try user_profiles)
+    // Since we can't query auth.users from client, provide SQL
+    const sql = `UPDATE user_profiles SET role = '${role}' WHERE user_id = (SELECT id FROM auth.users WHERE email = '${email}');`;
+    showStatus(status, `Run in SQL Editor:\n${sql}`, 'success');
     try { await navigator.clipboard.writeText(sql); } catch {}
 }
 

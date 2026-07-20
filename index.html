@@ -3,49 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vyron — Dashboard</title>
+    <title>Vyron</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        .auth-particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
-        .auth-particles .dot { position: absolute; width: 2px; height: 2px; background: var(--accent); border-radius: 50%; opacity: 0; animation: float 8s ease-in-out infinite; }
-        @keyframes float { 0%, 100% { opacity: 0; transform: translateY(0); } 50% { opacity: 0.4; transform: translateY(-80px); } }
-        .features { display: flex; gap: 24px; margin-top: 32px; justify-content: center; }
-        .feature { text-align: center; color: var(--text-3); font-size: 11px; }
-        .feature i { font-size: 20px; margin-bottom: 6px; display: block; color: var(--accent); }
+        .auth-particles{position:fixed;inset:0;z-index:1;pointer-events:none}
+        .auth-particles .dot{position:absolute;width:2px;height:2px;background:var(--accent);border-radius:50%;opacity:0;animation:float 8s ease-in-out infinite}
+        @keyframes float{0%,100%{opacity:0;transform:translateY(0)}50%{opacity:.4;transform:translateY(-80px)}}
+        .features{display:flex;gap:24px;margin-top:32px;justify-content:center}
+        .feature{text-align:center;color:var(--text-3);font-size:11px}
+        .feature i{font-size:20px;margin-bottom:6px;display:block;color:var(--accent)}
+        .auth-toggle{text-align:center;margin-top:16px;font-size:13px;color:var(--text-3)}
+        .auth-toggle a{color:var(--accent);cursor:pointer;text-decoration:none;font-weight:600}
+        .auth-toggle a:hover{text-decoration:underline}
 
-        .user-dashboard { animation: fadeIn 0.3s; }
-        .user-dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
-        .user-dash-header h2 { font-size: 20px; font-weight: 700; }
-        .user-dash-header .role-badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        .role-founder { background: rgba(245,158,11,0.15); color: #f59e0b; }
-        .role-admin { background: rgba(108,63,234,0.15); color: #a78bfa; }
-        .role-premium { background: rgba(59,130,246,0.15); color: #60a5fa; }
-        .role-free { background: rgba(96,96,128,0.15); color: #8888a8; }
+        .user-dashboard{animation:fadeIn .3s}
+        .user-dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+        .user-dash-header h2{font-size:20px;font-weight:700}
+        .role-badge{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+        .role-founder{background:rgba(245,158,11,.15);color:#f59e0b}
+        .role-admin{background:rgba(108,63,234,.15);color:#a78bfa}
+        .role-premium{background:rgba(59,130,246,.15);color:#60a5fa}
+        .role-free{background:rgba(96,96,128,.15);color:#8888a8}
 
-        .user-info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
-        .user-info-item { background: var(--bg-3); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
-        .user-info-item .label { font-size: 11px; color: var(--text-3); text-transform: uppercase; margin-bottom: 4px; }
-        .user-info-item .value { font-size: 14px; font-weight: 600; font-family: 'Courier New', monospace; }
+        .user-info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+        .user-info-item{background:var(--bg-3);padding:14px;border-radius:var(--radius-sm);border:1px solid var(--border)}
+        .user-info-item .label{font-size:11px;color:var(--text-3);text-transform:uppercase;margin-bottom:4px}
+        .user-info-item .value{font-size:14px;font-weight:600;font-family:'Courier New',monospace}
 
-        .download-card { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; text-align: center; margin-bottom: 20px; }
-        .download-card .icon { font-size: 48px; margin-bottom: 16px; }
-        .download-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-        .download-card p { color: var(--text-3); font-size: 13px; margin-bottom: 20px; }
-        .download-card .btn-download {
-            display: inline-flex; align-items: center; gap: 10px; padding: 14px 32px;
-            background: linear-gradient(135deg, #6c3fea, #5530d0); border: none; border-radius: var(--radius-sm);
-            color: white; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
-            transition: all 0.2s; text-decoration: none;
-        }
-        .download-card .btn-download:hover { transform: translateY(-2px); box-shadow: 0 6px 24px var(--accent-glow); }
-        .download-card .btn-download.disabled { opacity: 0.4; cursor: not-allowed; transform: none; pointer-events: none; }
-        .download-card .version-tag { display: inline-block; padding: 4px 12px; background: var(--bg-3); border-radius: 20px; font-size: 12px; color: var(--text-3); margin-bottom: 16px; border: 1px solid var(--border); }
+        .key-entry{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:32px;text-align:center;margin-bottom:20px}
+        .key-entry h3{font-size:16px;font-weight:700;margin-bottom:8px}
+        .key-entry p{color:var(--text-3);font-size:13px;margin-bottom:20px}
+        .key-entry .input-row{display:flex;gap:8px;max-width:400px;margin:0 auto}
+        .key-entry .input-row input{flex:1;padding:12px 16px;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-1);font-family:'Courier New',monospace;font-size:14px;text-transform:uppercase;letter-spacing:1px}
+        .key-entry .input-row input:focus{outline:none;border-color:var(--accent)}
+        .key-entry .input-row button{padding:12px 24px;background:var(--accent);border:none;border-radius:var(--radius-sm);color:white;font-family:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
+        .key-entry .input-row button:hover{background:#5530d0}
+        .key-entry .error-text{color:var(--red);font-size:12px;margin-top:8px}
+        .key-entry .success-text{color:var(--green);font-size:12px;margin-top:8px}
 
-        .changelog-card { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
-        .changelog-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text-2); }
-        .changelog-card p { font-size: 13px; color: var(--text-3); line-height: 1.6; }
+        .download-card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:32px;text-align:center;margin-bottom:20px}
+        .download-card .icon{font-size:48px;margin-bottom:16px}
+        .download-card h3{font-size:18px;font-weight:700;margin-bottom:8px}
+        .download-card p{color:var(--text-3);font-size:13px;margin-bottom:20px}
+        .download-card .btn-download{display:inline-flex;align-items:center;gap:10px;padding:14px 32px;background:linear-gradient(135deg,#6c3fea,#5530d0);border:none;border-radius:var(--radius-sm);color:white;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;text-decoration:none}
+        .download-card .btn-download:hover{transform:translateY(-2px);box-shadow:0 6px 24px var(--accent-glow)}
+        .download-card .btn-download.disabled{opacity:.4;cursor:not-allowed;transform:none;pointer-events:none}
+        .download-card .version-tag{display:inline-block;padding:4px 12px;background:var(--bg-3);border-radius:20px;font-size:12px;color:var(--text-3);margin-bottom:16px;border:1px solid var(--border)}
+
+        .changelog-card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+        .changelog-card h4{font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text-2)}
+        .changelog-card p{font-size:13px;color:var(--text-3);line-height:1.6}
+
+        .linked-success{background:var(--bg-2);border:1px solid var(--green-dim);border-radius:var(--radius);padding:24px;margin-bottom:20px;display:flex;align-items:center;gap:16px}
+        .linked-success .check{width:48px;height:48px;background:rgba(34,197,94,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--green);flex-shrink:0}
+        .linked-success .info h4{font-size:14px;font-weight:600;margin-bottom:2px}
+        .linked-success .info p{font-size:12px;color:var(--text-3)}
+        .linked-success .info .key-display{font-family:'Courier New',monospace;color:var(--accent);font-weight:600}
+
+        .settings-section{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px}
+        .settings-section h4{font-size:14px;font-weight:600;margin-bottom:16px;color:var(--text-2)}
+        .settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+        .settings-row:last-child{border-bottom:none}
+        .settings-row .left{display:flex;align-items:center;gap:12px}
+        .settings-row .left i{color:var(--text-3);width:20px;text-align:center}
+        .settings-row .left span{font-size:13px}
+        .settings-row .btn-unlink{padding:6px 14px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);border-radius:var(--radius-sm);color:var(--red);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer}
+        .settings-row .btn-unlink:hover{background:rgba(239,68,68,.25)}
     </style>
 </head>
 <body>
@@ -53,57 +78,115 @@
         <div class="login-bg"><div class="glow glow-1"></div><div class="glow glow-2"></div></div>
         <div class="auth-particles" id="particles"></div>
 
-        <!-- LOGIN FORM -->
-        <div id="loginView" class="login-card">
-            <div class="login-logo">
-                <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
-                <h1>VYRON</h1>
-                <p>Authenticate your license key</p>
+        <!-- ==================== AUTH VIEW ==================== -->
+        <div id="authView">
+            <!-- LOGIN CARD -->
+            <div id="loginCard" class="login-card">
+                <div class="login-logo">
+                    <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+                    <h1>VYRON</h1>
+                    <p>Sign in to your account</p>
+                </div>
+                <div class="login-form">
+                    <div class="input-group"><i class="fas fa-envelope"></i><input type="email" id="loginEmail" placeholder="Email" autocomplete="email"></div>
+                    <div class="input-group"><i class="fas fa-lock"></i><input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password"></div>
+                    <button id="btnLogin" class="btn-login" onclick="handleSignIn()"><span id="loginBtnText">Sign In</span><div id="loginSpinner" class="spinner hidden"></div></button>
+                    <div id="loginStatus" class="status-msg hidden"></div>
+                    <div class="auth-toggle">Don't have an account? <a onclick="showSignUp()">Sign Up</a></div>
+                </div>
+                <div class="features">
+                    <div class="feature"><i class="fas fa-bolt"></i>Instant Access</div>
+                    <div class="feature"><i class="fas fa-shield-halved"></i>HWID Locked</div>
+                    <div class="feature"><i class="fas fa-clock"></i>Auto Updates</div>
+                </div>
             </div>
-            <div class="login-form" id="loginForm">
-                <div class="input-group"><i class="fas fa-key"></i><input type="text" id="licenseKey" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false"></div>
-                <button id="btnValidate" class="btn-login" onclick="handleValidate()"><span id="btnText">Validate Key</span><div id="btnSpinner" class="spinner hidden"></div></button>
-                <div id="statusMessage" class="status-msg hidden"></div>
-            </div>
-            <div class="features">
-                <div class="feature"><i class="fas fa-bolt"></i>Instant Access</div>
-                <div class="feature"><i class="fas fa-shield-halved"></i>HWID Locked</div>
-                <div class="feature"><i class="fas fa-clock"></i>Auto Updates</div>
+
+            <!-- SIGNUP CARD -->
+            <div id="signupCard" class="login-card hidden">
+                <div class="login-logo">
+                    <div class="logo-icon"><i class="fas fa-user-plus"></i></div>
+                    <h1>VYRON</h1>
+                    <p>Create your account</p>
+                </div>
+                <div class="login-form">
+                    <div class="input-group"><i class="fas fa-user"></i><input type="text" id="signupUsername" placeholder="Username" autocomplete="username"></div>
+                    <div class="input-group"><i class="fas fa-envelope"></i><input type="email" id="signupEmail" placeholder="Email" autocomplete="email"></div>
+                    <div class="input-group"><i class="fas fa-lock"></i><input type="password" id="signupPassword" placeholder="Password" autocomplete="new-password"></div>
+                    <button id="btnSignup" class="btn-login" onclick="handleSignUp()"><span id="signupBtnText">Create Account</span><div id="signupSpinner" class="spinner hidden"></div></button>
+                    <div id="signupStatus" class="status-msg hidden"></div>
+                    <div class="auth-toggle">Already have an account? <a onclick="showLogin()">Sign In</a></div>
+                </div>
             </div>
         </div>
 
-        <!-- USER DASHBOARD (hidden until validated) -->
-        <div id="dashboardView" class="login-card hidden" style="width:520px">
+        <!-- ==================== DASHBOARD VIEW ==================== -->
+        <div id="dashboardView" class="login-card hidden" style="width:560px">
             <div class="user-dashboard">
                 <div class="user-dash-header">
                     <h2><i class="fas fa-shield-halved" style="color:var(--accent);margin-right:8px"></i> VYRON</h2>
-                    <span id="dashRoleBadge" class="role-badge role-premium">PREMIUM</span>
+                    <div style="display:flex;align-items:center;gap:12px">
+                        <span id="dashRoleBadge" class="role-badge role-free">FREE</span>
+                        <span id="dashUsername" style="font-size:13px;color:var(--text-3)">@user</span>
+                    </div>
                 </div>
 
                 <div class="user-info-grid">
-                    <div class="user-info-item"><div class="label">Key</div><div class="value" id="dashKey">—</div></div>
-                    <div class="user-info-item"><div class="label">Expires</div><div class="value" id="dashExpiry">—</div></div>
-                    <div class="user-info-item"><div class="label">Status</div><div class="value" style="color:var(--green)">Active</div></div>
+                    <div class="user-info-item"><div class="label">Email</div><div class="value" id="dashEmail" style="font-size:12px">—</div></div>
+                    <div class="user-info-item"><div class="label">Role</div><div class="value" id="dashRole">free</div></div>
+                    <div class="user-info-item"><div class="label">Joined</div><div class="value" id="dashJoined">—</div></div>
                 </div>
 
-                <div class="download-card">
-                    <div class="icon" id="dashIcon"><i class="fas fa-crown" style="color:#3b82f6"></i></div>
-                    <h3 id="dashTitle">Premium Loader</h3>
-                    <p id="dashDesc">Full access to all features — aimbot, silent aim, chams, ESP, and more.</p>
-                    <div class="version-tag" id="dashVersion">v1.0.0</div>
-                    <br>
-                    <a id="dashDownloadBtn" class="btn-download" href="#" target="_blank">
-                        <i class="fas fa-download"></i> Download Loader
-                    </a>
+                <!-- KEY NOT LINKED: show entry form -->
+                <div id="keyEntrySection" class="key-entry">
+                    <i class="fas fa-key" style="font-size:36px;color:var(--accent);margin-bottom:12px"></i>
+                    <h3>Enter Your License Key</h3>
+                    <p>Link a license key to unlock your loader download.</p>
+                    <div class="input-row">
+                        <input type="text" id="licenseKeyInput" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false">
+                        <button onclick="handleLinkKey()">Link</button>
+                    </div>
+                    <div id="keyEntryStatus" class="hidden"></div>
                 </div>
 
-                <div class="changelog-card">
-                    <h4><i class="fas fa-scroll"></i> What's New</h4>
-                    <p id="dashChangelog">No changelog available.</p>
+                <!-- KEY LINKED: show success + download -->
+                <div id="keyLinkedSection" class="hidden">
+                    <div class="linked-success">
+                        <div class="check"><i class="fas fa-check"></i></div>
+                        <div class="info">
+                            <h4>Key Linked</h4>
+                            <p><span class="key-display" id="linkedKeyValue">—</span></p>
+                            <p id="linkedKeyExpiry">Expires: —</p>
+                        </div>
+                    </div>
+
+                    <div class="download-card">
+                        <div class="icon" id="dashIcon"><i class="fas fa-crown" style="color:#3b82f6"></i></div>
+                        <h3 id="dashTitle">Premium Loader</h3>
+                        <p id="dashDesc">Full access to all features.</p>
+                        <div class="version-tag" id="dashVersion">v1.0.0</div>
+                        <br>
+                        <a id="dashDownloadBtn" class="btn-download" href="#" target="_blank">
+                            <i class="fas fa-download"></i> Download Loader
+                        </a>
+                    </div>
+
+                    <div class="changelog-card">
+                        <h4><i class="fas fa-scroll"></i> What's New</h4>
+                        <p id="dashChangelog">No changelog available.</p>
+                    </div>
                 </div>
 
-                <div style="text-align:center;margin-top:20px">
-                    <button class="btn btn-secondary" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Sign Out</button>
+                <!-- SETTINGS -->
+                <div class="settings-section">
+                    <h4><i class="fas fa-gear"></i> Account</h4>
+                    <div class="settings-row">
+                        <div class="left"><i class="fas fa-key"></i><span>License Key</span></div>
+                        <button id="btnUnlink" class="btn-unlink hidden" onclick="handleUnlinkKey()">Unlink</button>
+                    </div>
+                    <div class="settings-row">
+                        <div class="left"><i class="fas fa-right-from-bracket"></i><span>Sign Out</span></div>
+                        <button class="btn btn-secondary" onclick="handleSignOut()" style="font-size:12px;padding:6px 14px">Sign Out</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -112,50 +195,121 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
     <script>
+    let currentUser = null;
+    let currentProfile = null;
     let currentKeyData = null;
 
-    async function handleValidate() {
-        const keyInput = document.getElementById('licenseKey');
-        const btn = document.getElementById('btnValidate');
-        const btnText = document.getElementById('btnText');
-        const spinner = document.getElementById('btnSpinner');
-        const status = document.getElementById('statusMessage');
-        const keyValue = keyInput.value.trim().toUpperCase();
-        if (!keyValue) { showStatus(status, 'Enter a license key.', 'error'); return; }
-        btn.disabled = true; btnText.textContent = 'Validating...'; spinner.classList.remove('hidden'); status.classList.add('hidden');
+    // ==================== AUTH ====================
+    async function handleSignUp() {
+        const username = document.getElementById('signupUsername').value.trim();
+        const email = document.getElementById('signupEmail').value.trim();
+        const password = document.getElementById('signupPassword').value;
+        const status = document.getElementById('signupStatus');
+        const btn = document.getElementById('btnSignup');
+
+        if (!username || !email || !password) { showStatus(status, 'All fields required.', 'error'); return; }
+        if (username.length < 3) { showStatus(status, 'Username must be 3+ characters.', 'error'); return; }
+        if (password.length < 6) { showStatus(status, 'Password must be 6+ characters.', 'error'); return; }
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) { showStatus(status, 'Username: letters, numbers, underscore only.', 'error'); return; }
+
+        setLoading(btn, true, 'signupBtnText', 'signupSpinner');
         try {
-            const { data, error } = await _supabase.from('license_keys').select('*').eq('key_value', keyValue).single();
-            if (error || !data) { showStatus(status, 'Key not found.', 'error'); return; }
-            if (!data.is_active) { showStatus(status, 'Key has been revoked.', 'error'); return; }
-            if (data.expires_at && new Date(data.expires_at) < new Date()) { showStatus(status, 'Key has expired.', 'error'); return; }
-            currentKeyData = data;
-            showDashboard(data);
+            const { data: existing } = await _supabase.from('user_profiles').select('user_id').eq('username', username).maybeSingle();
+            if (existing) { showStatus(status, 'Username already taken.', 'error'); return; }
+
+            const { data, error } = await _supabase.auth.signUp({
+                email, password,
+                options: { data: { username } }
+            });
+            if (error) { showStatus(status, error.message, 'error'); return; }
+
+            showStatus(status, 'Account created! Signing in...', 'success');
+            setTimeout(() => { showLogin(); showStatus(document.getElementById('loginStatus'), 'Account created. Sign in.', 'success'); }, 1000);
         } catch (e) { showStatus(status, 'Connection error.', 'error'); }
-        finally { btn.disabled = false; btnText.textContent = 'Validate Key'; spinner.classList.add('hidden'); }
+        finally { setLoading(btn, false, 'signupBtnText', 'signupSpinner'); }
     }
 
-    async function showDashboard(keyData) {
-        document.getElementById('loginView').classList.add('hidden');
+    async function handleSignIn() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const status = document.getElementById('loginStatus');
+        const btn = document.getElementById('btnLogin');
+
+        if (!email || !password) { showStatus(status, 'Enter email and password.', 'error'); return; }
+
+        setLoading(btn, true, 'loginBtnText', 'loginSpinner');
+        try {
+            const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+            if (error) { showStatus(status, error.message, 'error'); return; }
+            // session listener handles the rest
+        } catch (e) { showStatus(status, 'Connection error.', 'error'); }
+        finally { setLoading(btn, false, 'loginBtnText', 'loginSpinner'); }
+    }
+
+    async function handleSignOut() {
+        await _supabase.auth.signOut();
+        currentUser = null; currentProfile = null; currentKeyData = null;
+        document.getElementById('dashboardView').classList.add('hidden');
+        document.getElementById('authView').classList.remove('hidden');
+        showLogin();
+    }
+
+    // ==================== DASHBOARD ====================
+    async function loadDashboard(user) {
+        currentUser = user;
+        document.getElementById('authView').classList.add('hidden');
         document.getElementById('dashboardView').classList.remove('hidden');
 
-        const role = keyData.role || 'free';
-        const isPremiumOrAbove = ['premium', 'admin', 'founder'].includes(role);
+        // Fetch profile
+        const { data: profile } = await _supabase.from('user_profiles').select('*').eq('user_id', user.id).single();
+        currentProfile = profile;
 
-        // Role badge
+        const role = profile?.role || 'free';
+        document.getElementById('dashUsername').textContent = '@' + (profile?.username || 'user');
+        document.getElementById('dashEmail').textContent = user.email;
+        document.getElementById('dashRole').textContent = role.toUpperCase();
+        document.getElementById('dashJoined').textContent = new Date(user.created_at).toLocaleDateString();
+
         const badge = document.getElementById('dashRoleBadge');
         badge.textContent = role.toUpperCase();
         badge.className = 'role-badge role-' + role;
 
-        // Key info
-        document.getElementById('dashKey').textContent = keyData.key_value;
-        document.getElementById('dashExpiry').textContent = keyData.expires_at
-            ? new Date(keyData.expires_at).toLocaleDateString() : 'Never';
+        // Check for linked key
+        const { data: keyData } = await _supabase.from('license_keys')
+            .select('*').eq('user_id', user.id).maybeSingle();
+
+        if (keyData) {
+            showLinkedKey(keyData);
+        } else {
+            showKeyEntry();
+        }
+    }
+
+    function showKeyEntry() {
+        document.getElementById('keyEntrySection').classList.remove('hidden');
+        document.getElementById('keyLinkedSection').classList.add('hidden');
+        document.getElementById('btnUnlink').classList.add('hidden');
+        document.getElementById('keyEntryStatus').classList.add('hidden');
+        document.getElementById('licenseKeyInput').value = '';
+    }
+
+    function showLinkedKey(keyData) {
+        currentKeyData = keyData;
+        document.getElementById('keyEntrySection').classList.add('hidden');
+        document.getElementById('keyLinkedSection').classList.remove('hidden');
+        document.getElementById('btnUnlink').classList.remove('hidden');
+
+        document.getElementById('linkedKeyValue').textContent = keyData.key_value;
+        document.getElementById('linkedKeyExpiry').textContent = keyData.expires_at
+            ? 'Expires: ' + new Date(keyData.expires_at).toLocaleDateString() : 'Expires: Never';
 
         // Download section
+        const role = currentProfile?.role || keyData.role || 'free';
+        const isPremiumOrAbove = ['premium', 'admin', 'founder'].includes(role);
+
         const icon = document.getElementById('dashIcon');
         const title = document.getElementById('dashTitle');
         const desc = document.getElementById('dashDesc');
-        const btn = document.getElementById('dashDownloadBtn');
 
         if (isPremiumOrAbove) {
             icon.innerHTML = '<i class="fas fa-crown" style="color:#3b82f6"></i>';
@@ -176,31 +330,86 @@
         document.getElementById('dashChangelog').textContent = cfg.changelog || 'No changelog available.';
 
         const dlUrl = isPremiumOrAbove ? cfg.download_premium_url : cfg.download_free_url;
-        if (dlUrl) {
-            btn.href = dlUrl;
-            btn.classList.remove('disabled');
-        } else {
-            btn.href = '#';
-            btn.classList.add('disabled');
-            btn.innerHTML = '<i class="fas fa-clock"></i> Coming Soon';
-        }
+        const btn = document.getElementById('dashDownloadBtn');
+        if (dlUrl) { btn.href = dlUrl; btn.classList.remove('disabled'); }
+        else { btn.href = '#'; btn.classList.add('disabled'); btn.innerHTML = '<i class="fas fa-clock"></i> Coming Soon'; }
     }
 
-    function logout() {
-        document.getElementById('dashboardView').classList.add('hidden');
-        document.getElementById('loginView').classList.remove('hidden');
-        document.getElementById('licenseKey').value = '';
-        document.getElementById('statusMessage').classList.add('hidden');
-        currentKeyData = null;
+    async function handleLinkKey() {
+        const input = document.getElementById('licenseKeyInput');
+        const status = document.getElementById('keyEntryStatus');
+        const keyValue = input.value.trim().toUpperCase();
+        if (!keyValue) { showKeyStatus(status, 'Enter a license key.', 'error'); return; }
+
+        try {
+            // Find the key
+            const { data: key, error } = await _supabase.from('license_keys')
+                .select('*').eq('key_value', keyValue).single();
+            if (error || !key) { showKeyStatus(status, 'Key not found.', 'error'); return; }
+            if (!key.is_active) { showKeyStatus(status, 'Key has been revoked.', 'error'); return; }
+            if (key.expires_at && new Date(key.expires_at) < new Date()) { showKeyStatus(status, 'Key has expired.', 'error'); return; }
+            if (key.user_id && key.user_id !== currentUser.id) { showKeyStatus(status, 'Key is linked to another account.', 'error'); return; }
+
+            // Link key to account
+            const { error: updateErr } = await _supabase.from('license_keys')
+                .update({ user_id: currentUser.id }).eq('key_value', keyValue);
+            if (updateErr) { showKeyStatus(status, 'Failed to link key.', 'error'); return; }
+
+            // If user doesn't have a role from key yet, apply it
+            if (key.role && key.role !== 'free' && currentProfile?.role === 'free') {
+                await _supabase.from('user_profiles').update({ role: key.role }).eq('user_id', currentUser.id);
+                currentProfile.role = key.role;
+            }
+
+            showKeyStatus(status, 'Key linked!', 'success');
+            const { data: updatedKey } = await _supabase.from('license_keys').select('*').eq('key_value', keyValue).single();
+            setTimeout(() => showLinkedKey(updatedKey), 500);
+        } catch (e) { showKeyStatus(status, 'Connection error.', 'error'); }
     }
 
+    async function handleUnlinkKey() {
+        if (!currentKeyData) return;
+        try {
+            await _supabase.from('license_keys').update({ user_id: null }).eq('key_value', currentKeyData.key_value);
+            currentKeyData = null;
+            showKeyEntry();
+        } catch (e) {}
+    }
+
+    // ==================== UI HELPERS ====================
+    function showLogin() {
+        document.getElementById('loginCard').classList.remove('hidden');
+        document.getElementById('signupCard').classList.add('hidden');
+    }
+    function showSignUp() {
+        document.getElementById('loginCard').classList.add('hidden');
+        document.getElementById('signupCard').classList.remove('hidden');
+    }
     function showStatus(el, msg, type) { el.textContent = msg; el.className = 'status-msg ' + type; }
+    function showKeyStatus(el, msg, type) { el.textContent = msg; el.className = (type === 'error' ? 'error-text' : 'success-text'); el.classList.remove('hidden'); }
+    function setLoading(btn, loading, textId, spinnerId) {
+        btn.disabled = loading;
+        document.getElementById(textId).textContent = loading ? 'Please wait...' : (textId === 'loginBtnText' ? 'Sign In' : 'Create Account');
+        document.getElementById(spinnerId).classList.toggle('hidden', !loading);
+    }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('licenseKey')?.addEventListener('keydown', e => { if (e.key === 'Enter') handleValidate(); });
-        const c = document.getElementById('particles');
-        if (c) for (let i = 0; i < 25; i++) { const d = document.createElement('div'); d.className = 'dot'; d.style.left = Math.random()*100+'%'; d.style.top = Math.random()*100+'%'; d.style.animationDelay = Math.random()*8+'s'; d.style.animationDuration = (6+Math.random()*6)+'s'; c.appendChild(d); }
+    // ==================== INIT ====================
+    _supabase.auth.onAuthStateChange((event, session) => {
+        if (session?.user) { loadDashboard(session.user); }
+        else if (event === 'SIGNED_OUT') { currentUser = null; currentProfile = null; currentKeyData = null; }
     });
+
+    (async () => {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (session?.user) loadDashboard(session.user);
+
+        document.getElementById('particles')?.querySelectorAll('.dot').length === 0 &&
+        (() => { const c = document.getElementById('particles'); for (let i = 0; i < 25; i++) { const d = document.createElement('div'); d.className = 'dot'; d.style.left = Math.random()*100+'%'; d.style.top = Math.random()*100+'%'; d.style.animationDelay = Math.random()*8+'s'; d.style.animationDuration = (6+Math.random()*6)+'s'; c.appendChild(d); } })();
+
+        ['loginEmail','loginPassword'].forEach(id => document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') handleSignIn(); }));
+        ['signupUsername','signupEmail','signupPassword'].forEach(id => document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') handleSignUp(); }));
+        document.getElementById('licenseKeyInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') handleLinkKey(); });
+    })();
     </script>
 </body>
 </html>
