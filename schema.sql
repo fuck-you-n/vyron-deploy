@@ -12,13 +12,21 @@ CREATE TABLE IF NOT EXISTS license_keys (
     key_value TEXT NOT NULL UNIQUE,
     is_active BOOLEAN NOT NULL DEFAULT true,
     tier TEXT NOT NULL DEFAULT 'free',
-    role TEXT NOT NULL DEFAULT 'free' CHECK (role IN ('founder', 'admin', 'premium', 'free')),
     hwid TEXT,
-    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     expires_at TIMESTAMPTZ,
     created_by UUID REFERENCES auth.users(id)
 );
+
+-- Add columns that may not exist on older tables
+DO $$ BEGIN ALTER TABLE license_keys ADD COLUMN role TEXT NOT NULL DEFAULT 'free'; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE license_keys ADD COLUMN user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+
+-- Add check constraint if not exists
+DO $$ BEGIN
+    ALTER TABLE license_keys ADD CONSTRAINT license_keys_role_check CHECK (role IN ('founder', 'admin', 'premium', 'free'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_license_keys_key_value ON license_keys(key_value);
 CREATE INDEX IF NOT EXISTS idx_license_keys_user_id ON license_keys(user_id);
