@@ -3,40 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vyron - Authentication</title>
+    <title>Vyron — Authenticate</title>
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .auth-particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+        .auth-particles .dot {
+            position: absolute; width: 2px; height: 2px; background: var(--accent);
+            border-radius: 50%; opacity: 0; animation: float 8s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { opacity: 0; transform: translateY(0) scale(1); }
+            50% { opacity: 0.4; transform: translateY(-80px) scale(1.5); }
+        }
+        .features { display: flex; gap: 24px; margin-top: 32px; justify-content: center; }
+        .feature { text-align: center; color: var(--text-3); font-size: 11px; }
+        .feature i { font-size: 20px; margin-bottom: 6px; display: block; color: var(--accent); }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card login-card">
-            <div class="logo">
+    <div class="login-screen">
+        <div class="login-bg">
+            <div class="glow glow-1"></div>
+            <div class="glow glow-2"></div>
+        </div>
+        <div class="auth-particles" id="particles"></div>
+
+        <div class="login-card">
+            <div class="login-logo">
+                <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
                 <h1>VYRON</h1>
-                <p class="tagline">Authentication System</p>
+                <p>Authenticate your license key</p>
             </div>
 
-            <div class="form-group">
-                <label for="licenseKey">License Key</label>
-                <input type="text" id="licenseKey" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false">
+            <div class="login-form">
+                <div class="input-group">
+                    <i class="fas fa-key"></i>
+                    <input type="text" id="licenseKey" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false">
+                </div>
+
+                <button id="btnValidate" class="btn-login" onclick="handleValidate()">
+                    <span id="btnText">Validate Key</span>
+                    <div id="btnSpinner" class="spinner hidden"></div>
+                </button>
+
+                <div id="statusMessage" class="status-msg hidden"></div>
             </div>
 
-            <button id="btnValidate" class="btn btn-primary" onclick="handleValidate()">
-                <span id="btnText">VALIDATE</span>
-                <div id="btnSpinner" class="spinner hidden"></div>
-            </button>
+            <div class="features">
+                <div class="feature"><i class="fas fa-bolt"></i>Instant Access</div>
+                <div class="feature"><i class="fas fa-shield-halved"></i>HWID Locked</div>
+                <div class="feature"><i class="fas fa-clock"></i>Auto Updates</div>
+            </div>
 
-            <div id="statusMessage" class="status-msg hidden"></div>
-
-            <div class="footer-links">
-                <a href="admin.html">Admin Panel</a>
+            <div class="login-footer">
+                <a href="admin.html"><i class="fas fa-user-shield"></i> Admin Panel</a>
             </div>
         </div>
-
-        <div class="particles" id="particles"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
+    <script>
+        // Particles
+        const container = document.getElementById('particles');
+        if (container) {
+            for (let i = 0; i < 25; i++) {
+                const d = document.createElement('div');
+                d.className = 'dot';
+                d.style.left = Math.random() * 100 + '%';
+                d.style.top = Math.random() * 100 + '%';
+                d.style.animationDelay = Math.random() * 8 + 's';
+                d.style.animationDuration = (6 + Math.random() * 6) + 's';
+                container.appendChild(d);
+            }
+        }
+    </script>
 </body>
 </html>

@@ -3,126 +3,393 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vyron - Admin Panel</title>
+    <title>Vyron — Admin</title>
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-    <div class="admin-container">
-        <!-- Login overlay -->
-        <div id="adminLogin" class="admin-login-overlay">
-            <div class="card login-card">
-                <div class="logo">
-                    <h1>VYRON</h1>
-                    <p class="tagline">Admin Access</p>
+    <!-- ===== LOGIN SCREEN ===== -->
+    <div id="adminLogin" class="login-screen">
+        <div class="login-bg">
+            <div class="glow glow-1"></div>
+            <div class="glow glow-2"></div>
+        </div>
+        <div class="login-card">
+            <div class="login-logo">
+                <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+                <h1>VYRON</h1>
+                <p>Admin Panel</p>
+            </div>
+            <div class="login-form">
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="adminEmail" placeholder="Email address">
                 </div>
-                <div class="form-group">
-                    <label for="adminEmail">Email</label>
-                    <input type="email" id="adminEmail" placeholder="admin@vyron.com">
-                </div>
-                <div class="form-group">
-                    <label for="adminPassword">Password</label>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
                     <input type="password" id="adminPassword" placeholder="Password">
+                    <button type="button" class="toggle-pw" onclick="togglePassword()"><i class="fas fa-eye"></i></button>
                 </div>
-                <button id="btnAdminLogin" class="btn btn-primary" onclick="handleAdminLogin()">
-                    <span id="adminLoginText">LOGIN</span>
+                <button id="btnAdminLogin" class="btn-login" onclick="handleAdminLogin()">
+                    <span id="adminLoginText">Sign In</span>
                     <div id="adminLoginSpinner" class="spinner hidden"></div>
                 </button>
                 <div id="adminLoginStatus" class="status-msg hidden"></div>
-                <div class="footer-links">
-                    <a href="index.html">Back to Login</a>
-                </div>
+            </div>
+            <div class="login-footer">
+                <a href="index.html">User Login</a>
             </div>
         </div>
+    </div>
 
-        <!-- Dashboard (hidden until authenticated) -->
-        <div id="adminDashboard" class="hidden">
-            <nav class="admin-nav">
-                <div class="nav-left">
-                    <h2>VYRON <span class="nav-subtitle">Admin</span></h2>
-                </div>
-                <div class="nav-right">
-                    <span id="adminEmailDisplay" class="admin-email"></span>
-                    <button class="btn btn-sm btn-secondary" onclick="handleLogout()">Logout</button>
-                </div>
-            </nav>
-
-            <!-- Stats -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="statTotal">0</div>
-                    <div class="stat-label">Total Keys</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value stat-active" id="statActive">0</div>
-                    <div class="stat-label">Active</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value stat-expired" id="statExpired">0</div>
-                    <div class="stat-label">Expired</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value stat-revoked" id="statRevoked">0</div>
-                    <div class="stat-label">Revoked</div>
+    <!-- ===== DASHBOARD ===== -->
+    <div id="adminDashboard" class="dashboard hidden">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i class="fas fa-shield-halved"></i>
+                    <span>VYRON</span>
                 </div>
             </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" onclick="showSection('overview')">
+                    <i class="fas fa-chart-pie"></i><span>Overview</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('keys')">
+                    <i class="fas fa-key"></i><span>License Keys</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('users')">
+                    <i class="fas fa-users"></i><span>Users</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('subscriptions')">
+                    <i class="fas fa-crown"></i><span>Subscriptions</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('downloads')">
+                    <i class="fas fa-download"></i><span>Downloads</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('settings')">
+                    <i class="fas fa-gear"></i><span>Settings</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="admin-badge">
+                    <div class="admin-avatar"><i class="fas fa-user-shield"></i></div>
+                    <div class="admin-info">
+                        <span id="adminEmailDisplay" class="admin-email"></span>
+                        <span class="admin-role">Administrator</span>
+                    </div>
+                </div>
+                <button class="btn-logout" onclick="handleLogout()"><i class="fas fa-right-from-bracket"></i></button>
+            </div>
+        </aside>
 
-            <!-- Create Key -->
-            <div class="card">
-                <h3>Create New Key</h3>
-                <div class="create-form">
-                    <div class="form-row">
-                        <div class="form-group flex-2">
-                            <label>License Key</label>
-                            <div class="input-with-btn">
-                                <input type="text" id="newKey" placeholder="Auto-generated" spellcheck="false">
-                                <button class="btn btn-sm btn-secondary" onclick="generateKey()">Generate</button>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="btn-icon" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <h2 id="pageTitle">Overview</h2>
+                </div>
+                <div class="topbar-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="globalSearch" placeholder="Search keys, users..." oninput="handleSearch(this.value)">
+                    </div>
+                    <button class="btn-icon" onclick="loadAllData()"><i class="fas fa-sync-alt"></i></button>
+                </div>
+            </header>
+
+            <!-- OVERVIEW SECTION -->
+            <section id="section-overview" class="content-section active">
+                <div class="stats-row">
+                    <div class="stat-card purple">
+                        <div class="stat-icon"><i class="fas fa-key"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statTotal">0</span>
+                            <span class="stat-label">Total Keys</span>
+                        </div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statActive">0</span>
+                            <span class="stat-label">Active</span>
+                        </div>
+                    </div>
+                    <div class="stat-card yellow">
+                        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statExpired">0</span>
+                            <span class="stat-label">Expired</span>
+                        </div>
+                    </div>
+                    <div class="stat-card red">
+                        <div class="stat-icon"><i class="fas fa-ban"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statRevoked">0</span>
+                            <span class="stat-label">Revoked</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-clock-rotate-left"></i> Recent Keys</h3>
+                        </div>
+                        <div class="card-body" id="recentKeysList">
+                            <div class="empty-state"><i class="fas fa-inbox"></i><p>No keys yet</p></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                        </div>
+                        <div class="card-body quick-actions">
+                            <button class="quick-btn" onclick="showSection('keys'); generateKey();">
+                                <i class="fas fa-plus"></i><span>Create Key</span>
+                            </button>
+                            <button class="quick-btn" onclick="loadAllData()">
+                                <i class="fas fa-refresh"></i><span>Refresh Data</span>
+                            </button>
+                            <button class="quick-btn" onclick="exportKeys()">
+                                <i class="fas fa-file-export"></i><span>Export Keys</span>
+                            </button>
+                            <button class="quick-btn" onclick="showSection('settings')">
+                                <i class="fas fa-gear"></i><span>Settings</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- KEYS SECTION -->
+            <section id="section-keys" class="content-section">
+                <div class="section-header">
+                    <h3>License Keys</h3>
+                    <div class="section-actions">
+                        <button class="btn btn-secondary" onclick="exportKeys()"><i class="fas fa-file-export"></i> Export</button>
+                        <button class="btn btn-primary" onclick="showCreateModal()"><i class="fas fa-plus"></i> Create Key</button>
+                    </div>
+                </div>
+
+                <div class="filters-row">
+                    <button class="filter-btn active" onclick="filterKeys('all', this)">All</button>
+                    <button class="filter-btn" onclick="filterKeys('active', this)">Active</button>
+                    <button class="filter-btn" onclick="filterKeys('expired', this)">Expired</button>
+                    <button class="filter-btn" onclick="filterKeys('revoked', this)">Revoked</button>
+                </div>
+
+                <div class="card">
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
+                                    <th>Key</th>
+                                    <th>Tier</th>
+                                    <th>HWID</th>
+                                    <th>Created</th>
+                                    <th>Expires</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="keysTableBody">
+                                <tr><td colspan="8" class="empty-row"><div class="empty-state"><i class="fas fa-inbox"></i><p>No keys found</p></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bulk-actions hidden" id="bulkActions">
+                    <span id="selectedCount">0 selected</span>
+                    <button class="btn btn-sm btn-secondary" onclick="bulkActivate()"><i class="fas fa-check"></i> Activate</button>
+                    <button class="btn btn-sm btn-warning" onclick="bulkRevoke()"><i class="fas fa-ban"></i> Revoke</button>
+                    <button class="btn btn-sm btn-danger" onclick="bulkDelete()"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+            </section>
+
+            <!-- USERS SECTION -->
+            <section id="section-users" class="content-section">
+                <div class="section-header">
+                    <h3>Registered Users</h3>
+                    <button class="btn btn-secondary" onclick="loadUsers()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
+                <div class="card">
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>User ID</th>
+                                    <th>Created</th>
+                                    <th>Last Sign In</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr><td colspan="5" class="empty-row"><div class="empty-state"><i class="fas fa-users"></i><p>Connect Supabase service key to view users</p></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SUBSCRIPTIONS SECTION -->
+            <section id="section-subscriptions" class="content-section">
+                <div class="section-header">
+                    <h3>Subscription Plans</h3>
+                </div>
+                <div class="grid-3">
+                    <div class="plan-card">
+                        <div class="plan-header free"><i class="fas fa-star"></i></div>
+                        <h4>Free</h4>
+                        <div class="plan-price">$0</div>
+                        <ul class="plan-features">
+                            <li><i class="fas fa-check"></i> Basic ESP</li>
+                            <li><i class="fas fa-check"></i> Aimbot</li>
+                            <li class="disabled"><i class="fas fa-x"></i> Silent Aim</li>
+                            <li class="disabled"><i class="fas fa-x"></i> Chams</li>
+                            <li class="disabled"><i class="fas fa-x"></i> Priority Support</li>
+                        </ul>
+                        <div class="plan-count"><span id="subFreeCount">0</span> users</div>
+                    </div>
+                    <div class="plan-card featured">
+                        <div class="plan-badge">Most Popular</div>
+                        <div class="plan-header premium"><i class="fas fa-crown"></i></div>
+                        <h4>Premium</h4>
+                        <div class="plan-price">$9.99<span>/mo</span></div>
+                        <ul class="plan-features">
+                            <li><i class="fas fa-check"></i> Full ESP</li>
+                            <li><i class="fas fa-check"></i> Aimbot</li>
+                            <li><i class="fas fa-check"></i> Silent Aim</li>
+                            <li><i class="fas fa-check"></i> Chams</li>
+                            <li><i class="fas fa-check"></i> Priority Support</li>
+                        </ul>
+                        <div class="plan-count"><span id="subPremiumCount">0</span> users</div>
+                    </div>
+                    <div class="plan-card">
+                        <div class="plan-header lifetime"><i class="fas fa-gem"></i></div>
+                        <h4>Lifetime</h4>
+                        <div class="plan-price">$29.99</div>
+                        <ul class="plan-features">
+                            <li><i class="fas fa-check"></i> Everything in Premium</li>
+                            <li><i class="fas fa-check"></i> One-time payment</li>
+                            <li><i class="fas fa-check"></i> Early access features</li>
+                            <li><i class="fas fa-check"></i> Discord role</li>
+                            <li><i class="fas fa-check"></i> Beta testing</li>
+                        </ul>
+                        <div class="plan-count"><span id="subLifetimeCount">0</span> users</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DOWNLOADS SECTION -->
+            <section id="section-downloads" class="content-section">
+                <div class="section-header">
+                    <h3>Downloads & Versions</h3>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="version-display">
+                            <div class="current-version">
+                                <span class="label">Current Version</span>
+                                <span class="version" id="currentVersionDisplay">1.0.0</span>
+                            </div>
+                            <div class="version-info">
+                                <div class="info-row"><span>Download URL</span><span id="downloadUrlDisplay" class="url-text">Not configured</span></div>
+                                <div class="info-row"><span>Total Downloads</span><span id="totalDownloads">0</span></div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Tier</label>
-                            <select id="newTier">
-                                <option value="free">Free</option>
-                                <option value="premium" selected>Premium</option>
-                            </select>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header"><h3><i class="fas fa-upload"></i> Push Update</h3></div>
+                    <div class="card-body">
+                        <div class="update-form">
+                            <div class="input-group">
+                                <label>New Version Number</label>
+                                <input type="text" id="newVersion" placeholder="e.g. 1.10">
+                            </div>
+                            <div class="input-group">
+                                <label>Download URL (GitHub Releases, etc.)</label>
+                                <input type="url" id="newDownloadUrl" placeholder="https://github.com/...">
+                            </div>
+                            <div class="input-group">
+                                <label>Changelog</label>
+                                <textarea id="newChangelog" rows="3" placeholder="What's new in this version..."></textarea>
+                            </div>
+                            <button class="btn btn-primary" onclick="pushUpdate()"><i class="fas fa-rocket"></i> Push Update</button>
+                            <div id="updateStatus" class="status-msg hidden"></div>
                         </div>
-                        <div class="form-group">
-                            <label>Expires</label>
-                            <input type="date" id="newExpiry">
+                    </div>
+                </div>
+            </section>
+
+            <!-- SETTINGS SECTION -->
+            <section id="section-settings" class="content-section">
+                <div class="section-header"><h3>Settings</h3></div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="settings-group">
+                            <h4>Supabase Configuration</h4>
+                            <div class="info-row"><span>Project URL</span><span class="url-text" id="settingSupabaseUrl"></span></div>
+                            <div class="info-row"><span>RLS Status</span><span class="badge badge-green">Active</span></div>
                         </div>
-                        <div class="form-group">
-                            <label>&nbsp;</label>
-                            <button class="btn btn-primary" onclick="createKey()">Create Key</button>
+                        <div class="settings-group">
+                            <h4>API Endpoints</h4>
+                            <div class="info-row"><span>Validate</span><code>POST /api/validate</code></div>
+                            <div class="info-row"><span>Version</span><code>GET /api/version</code></div>
+                            <div class="info-row"><span>Download</span><code>GET /api/download</code></div>
                         </div>
+                        <div class="settings-group">
+                            <h4>SQL Schema</h4>
+                            <p class="text-muted">Run <code>fix-rls.sql</code> in Supabase SQL Editor if keys fail to create.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ===== CREATE KEY MODAL ===== -->
+    <div id="createModal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeCreateModal()"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fas fa-key"></i> Create License Key</h3>
+                <button class="btn-icon" onclick="closeCreateModal()"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label>License Key</label>
+                    <div class="input-with-btn">
+                        <input type="text" id="newKey" placeholder="Click generate or type your own" spellcheck="false">
+                        <button class="btn btn-secondary" onclick="generateKey()"><i class="fas fa-dice"></i> Generate</button>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label>Tier</label>
+                        <select id="newTier">
+                            <option value="free">Free</option>
+                            <option value="premium" selected>Premium</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Expiry Date <span class="text-muted">(optional)</span></label>
+                        <input type="date" id="newExpiry">
                     </div>
                 </div>
                 <div id="createStatus" class="status-msg hidden"></div>
             </div>
-
-            <!-- Keys Table -->
-            <div class="card">
-                <div class="table-header">
-                    <h3>License Keys</h3>
-                    <button class="btn btn-sm btn-secondary" onclick="loadKeys()">Refresh</button>
-                </div>
-                <div class="table-wrapper">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Key</th>
-                                <th>Tier</th>
-                                <th>HWID</th>
-                                <th>Created</th>
-                                <th>Expires</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="keysTableBody">
-                            <tr><td colspan="7" class="empty-row">Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="createKey()"><i class="fas fa-plus"></i> Create Key</button>
             </div>
         </div>
     </div>
