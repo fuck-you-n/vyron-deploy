@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -17,7 +17,6 @@
         .auth-toggle{text-align:center;margin-top:16px;font-size:13px;color:var(--text-3)}
         .auth-toggle a{color:var(--accent);cursor:pointer;text-decoration:none;font-weight:600}
         .auth-toggle a:hover{text-decoration:underline}
-
         .user-dashboard{animation:fadeIn .3s}
         .user-dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)}
         .user-dash-header h2{font-size:20px;font-weight:700}
@@ -26,12 +25,10 @@
         .role-admin{background:rgba(108,63,234,.15);color:#a78bfa}
         .role-premium{background:rgba(59,130,246,.15);color:#60a5fa}
         .role-free{background:rgba(96,96,128,.15);color:#8888a8}
-
         .user-info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
         .user-info-item{background:var(--bg-3);padding:14px;border-radius:var(--radius-sm);border:1px solid var(--border)}
         .user-info-item .label{font-size:11px;color:var(--text-3);text-transform:uppercase;margin-bottom:4px}
         .user-info-item .value{font-size:14px;font-weight:600;font-family:'Courier New',monospace}
-
         .key-entry{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:32px;text-align:center;margin-bottom:20px}
         .key-entry h3{font-size:16px;font-weight:700;margin-bottom:8px}
         .key-entry p{color:var(--text-3);font-size:13px;margin-bottom:20px}
@@ -42,7 +39,6 @@
         .key-entry .input-row button:hover{background:#5530d0}
         .key-entry .error-text{color:var(--red);font-size:12px;margin-top:8px}
         .key-entry .success-text{color:var(--green);font-size:12px;margin-top:8px}
-
         .download-card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:32px;text-align:center;margin-bottom:20px}
         .download-card .icon{font-size:48px;margin-bottom:16px}
         .download-card h3{font-size:18px;font-weight:700;margin-bottom:8px}
@@ -51,17 +47,14 @@
         .download-card .btn-download:hover{transform:translateY(-2px);box-shadow:0 6px 24px var(--accent-glow)}
         .download-card .btn-download.disabled{opacity:.4;cursor:not-allowed;transform:none;pointer-events:none}
         .download-card .version-tag{display:inline-block;padding:4px 12px;background:var(--bg-3);border-radius:20px;font-size:12px;color:var(--text-3);margin-bottom:16px;border:1px solid var(--border)}
-
         .changelog-card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
         .changelog-card h4{font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text-2)}
         .changelog-card p{font-size:13px;color:var(--text-3);line-height:1.6}
-
         .linked-success{background:var(--bg-2);border:1px solid var(--green-dim);border-radius:var(--radius);padding:24px;margin-bottom:20px;display:flex;align-items:center;gap:16px}
         .linked-success .check{width:48px;height:48px;background:rgba(34,197,94,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--green);flex-shrink:0}
         .linked-success .info h4{font-size:14px;font-weight:600;margin-bottom:2px}
         .linked-success .info p{font-size:12px;color:var(--text-3)}
         .linked-success .info .key-display{font-family:'Courier New',monospace;color:var(--accent);font-weight:600}
-
         .settings-section{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px}
         .settings-section h4{font-size:14px;font-weight:600;margin-bottom:16px;color:var(--text-2)}
         .settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
@@ -78,9 +71,7 @@
         <div class="login-bg"><div class="glow glow-1"></div><div class="glow glow-2"></div></div>
         <div class="auth-particles" id="particles"></div>
 
-        <!-- ==================== AUTH VIEW ==================== -->
         <div id="authView">
-            <!-- LOGIN CARD -->
             <div id="loginCard" class="login-card">
                 <div class="login-logo">
                     <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
@@ -101,7 +92,6 @@
                 </div>
             </div>
 
-            <!-- SIGNUP CARD -->
             <div id="signupCard" class="login-card hidden">
                 <div class="login-logo">
                     <div class="logo-icon"><i class="fas fa-user-plus"></i></div>
@@ -119,7 +109,6 @@
             </div>
         </div>
 
-        <!-- ==================== DASHBOARD VIEW ==================== -->
         <div id="dashboardView" class="login-card hidden" style="width:560px">
             <div class="user-dashboard">
                 <div class="user-dash-header">
@@ -129,14 +118,11 @@
                         <span id="dashUsername" style="font-size:13px;color:var(--text-3)">@user</span>
                     </div>
                 </div>
-
                 <div class="user-info-grid">
-                    <div class="user-info-item"><div class="label">Email</div><div class="value" id="dashEmail" style="font-size:12px">—</div></div>
+                    <div class="user-info-item"><div class="label">Email</div><div class="value" id="dashEmail" style="font-size:12px">-</div></div>
                     <div class="user-info-item"><div class="label">Role</div><div class="value" id="dashRole">free</div></div>
-                    <div class="user-info-item"><div class="label">Joined</div><div class="value" id="dashJoined">—</div></div>
+                    <div class="user-info-item"><div class="label">Joined</div><div class="value" id="dashJoined">-</div></div>
                 </div>
-
-                <!-- KEY NOT LINKED: show entry form -->
                 <div id="keyEntrySection" class="key-entry">
                     <i class="fas fa-key" style="font-size:36px;color:var(--accent);margin-bottom:12px"></i>
                     <h3>Enter Your License Key</h3>
@@ -147,36 +133,28 @@
                     </div>
                     <div id="keyEntryStatus" class="hidden"></div>
                 </div>
-
-                <!-- KEY LINKED: show success + download -->
                 <div id="keyLinkedSection" class="hidden">
                     <div class="linked-success">
                         <div class="check"><i class="fas fa-check"></i></div>
                         <div class="info">
                             <h4>Key Linked</h4>
-                            <p><span class="key-display" id="linkedKeyValue">—</span></p>
-                            <p id="linkedKeyExpiry">Expires: —</p>
+                            <p><span class="key-display" id="linkedKeyValue">-</span></p>
+                            <p id="linkedKeyExpiry">Expires: -</p>
                         </div>
                     </div>
-
                     <div class="download-card">
                         <div class="icon" id="dashIcon"><i class="fas fa-crown" style="color:#3b82f6"></i></div>
                         <h3 id="dashTitle">Premium Loader</h3>
                         <p id="dashDesc">Full access to all features.</p>
                         <div class="version-tag" id="dashVersion">v1.0.0</div>
                         <br>
-                        <a id="dashDownloadBtn" class="btn-download" href="#" target="_blank">
-                            <i class="fas fa-download"></i> Download Loader
-                        </a>
+                        <a id="dashDownloadBtn" class="btn-download disabled" href="#"><i class="fas fa-clock"></i> Coming Soon</a>
                     </div>
-
                     <div class="changelog-card">
                         <h4><i class="fas fa-scroll"></i> What's New</h4>
                         <p id="dashChangelog">No changelog available.</p>
                     </div>
                 </div>
-
-                <!-- SETTINGS -->
                 <div class="settings-section">
                     <h4><i class="fas fa-gear"></i> Account</h4>
                     <div class="settings-row">
@@ -191,261 +169,243 @@
             </div>
         </div>
     </div>
+<script>
+var DB_URL = 'https://ktpydnabvffzybewsxgu.supabase.co';
+var DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0cHlkbmFidmZmenliZXdzeGd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NzM2NzcsImV4cCI6MjEwMDE0OTY3N30.hA6gpgsYDZATUinm4ogyODmGdt9lyDO66kUmTHwjsiM';
+var sb = null;
+var currentUser = null;
+var currentProfile = null;
+var currentKeyData = null;
 
-    <script>
-    // Load Supabase CDN dynamically so it never blocks
-    (function loadSupabase() {
-        var s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-        s.onload = function() { initApp(); };
-        s.onerror = function() { console.error('Failed to load Supabase SDK'); initApp(); };
-        document.head.appendChild(s);
-    })();
+function initSupabase() {
+    if (typeof supabase === 'undefined') { console.error('Supabase SDK not loaded'); return; }
+    sb = supabase.createClient(DB_URL, DB_KEY);
+    sb.auth.onAuthStateChange(function(ev, sess) {
+        if (sess && sess.user) { loadDashboard(sess.user); }
+        else if (ev === 'SIGNED_OUT') { currentUser = null; currentProfile = null; currentKeyData = null; }
+    });
+    sb.auth.getSession().then(function(r) {
+        if (r.data && r.data.session && r.data.session.user) { loadDashboard(r.data.session.user); }
+    });
+}
 
-    var _supabase = null;
+function requireDb() {
+    if (!sb) { alert('Database is still loading. Please wait a moment and try again.'); return false; }
+    return true;
+}
 
-    function initApp() {
-        try {
-            if (typeof supabase !== 'undefined') {
-                _supabase = supabase.createClient(
-                    'https://ktpydnabvffzybewsxgu.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0cHlkbmFidmZmenliZXdzeGd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NzM2NzcsImV4cCI6MjEwMDE0OTY3N30.hA6gpgsYDZATUinm4ogyODmGdt9lyDO66kUmTHwjsiM'
-                );
-            }
-        } catch(e) { console.error('Supabase init error:', e); }
+function showSignUp() {
+    document.getElementById('loginCard').classList.add('hidden');
+    document.getElementById('signupCard').classList.remove('hidden');
+}
 
-        try {
-            if (_supabase) {
-                _supabase.auth.onAuthStateChange(function(event, session) {
-                    if (session && session.user) { loadDashboard(session.user); }
-                    else if (event === 'SIGNED_OUT') { currentUser = null; currentProfile = null; currentKeyData = null; }
-                });
-                _supabase.auth.getSession().then(function(result) {
-                    if (result.data && result.data.session && result.data.session.user) {
-                        loadDashboard(result.data.session.user);
-                    }
-                });
-            }
-        } catch(e) { console.error('Supabase auth init failed:', e); }
+function showLogin() {
+    document.getElementById('loginCard').classList.remove('hidden');
+    document.getElementById('signupCard').classList.add('hidden');
+}
+
+function showStatus(el, msg, type) {
+    el.textContent = msg;
+    el.className = 'status-msg ' + type;
+}
+
+function showKeyStatus(el, msg, type) {
+    el.textContent = msg;
+    el.className = (type === 'error' ? 'error-text' : 'success-text');
+    el.classList.remove('hidden');
+}
+
+function setLoading(btn, loading, textId, spinnerId) {
+    btn.disabled = loading;
+    document.getElementById(textId).textContent = loading ? 'Please wait...' : (textId === 'loginBtnText' ? 'Sign In' : 'Create Account');
+    document.getElementById(spinnerId).classList.toggle('hidden', !loading);
+}
+
+function handleSignUp() {
+    var username = document.getElementById('signupUsername').value.trim();
+    var email = document.getElementById('signupEmail').value.trim();
+    var password = document.getElementById('signupPassword').value;
+    var status = document.getElementById('signupStatus');
+    var btn = document.getElementById('btnSignup');
+
+    if (!username || !email || !password) { showStatus(status, 'All fields required.', 'error'); return; }
+    if (username.length < 3) { showStatus(status, 'Username must be 3+ characters.', 'error'); return; }
+    if (password.length < 6) { showStatus(status, 'Password must be 6+ characters.', 'error'); return; }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) { showStatus(status, 'Letters, numbers, underscore only.', 'error'); return; }
+    if (!requireDb()) return;
+
+    setLoading(btn, true, 'signupBtnText', 'signupSpinner');
+
+    sb.from('user_profiles').select('user_id').eq('username', username).maybeSingle()
+    .then(function(r) {
+        if (r.data) { showStatus(status, 'Username already taken.', 'error'); setLoading(btn, false, 'signupBtnText', 'signupSpinner'); return null; }
+        return sb.auth.signUp({ email: email, password: password, options: { data: { username: username } } });
+    })
+    .then(function(r) {
+        if (!r) return;
+        if (r.error) { showStatus(status, r.error.message, 'error'); setLoading(btn, false, 'signupBtnText', 'signupSpinner'); return; }
+        showStatus(status, 'Account created! Switching to sign in...', 'success');
+        setLoading(btn, false, 'signupBtnText', 'signupSpinner');
+        setTimeout(function() { showLogin(); showStatus(document.getElementById('loginStatus'), 'Account created. Sign in now.', 'success'); }, 1000);
+    })
+    .catch(function(e) { showStatus(status, 'Connection error.', 'error'); setLoading(btn, false, 'signupBtnText', 'signupSpinner'); });
+}
+
+function handleSignIn() {
+    var email = document.getElementById('loginEmail').value.trim();
+    var password = document.getElementById('loginPassword').value;
+    var status = document.getElementById('loginStatus');
+    var btn = document.getElementById('btnLogin');
+
+    if (!email || !password) { showStatus(status, 'Enter email and password.', 'error'); return; }
+    if (!requireDb()) return;
+
+    setLoading(btn, true, 'loginBtnText', 'loginSpinner');
+
+    sb.auth.signInWithPassword({ email: email, password: password })
+    .then(function(r) {
+        if (r.error) { showStatus(status, r.error.message, 'error'); }
+    })
+    .catch(function(e) { showStatus(status, 'Connection error.', 'error'); })
+    .then(function() { setLoading(btn, false, 'loginBtnText', 'loginSpinner'); });
+}
+
+function handleSignOut() {
+    if (!sb) return;
+    sb.auth.signOut().then(function() {
+        currentUser = null; currentProfile = null; currentKeyData = null;
+        document.getElementById('dashboardView').classList.add('hidden');
+        document.getElementById('authView').classList.remove('hidden');
+        showLogin();
+    });
+}
+
+function loadDashboard(user) {
+    currentUser = user;
+    document.getElementById('authView').classList.add('hidden');
+    document.getElementById('dashboardView').classList.remove('hidden');
+
+    sb.from('user_profiles').select('*').eq('user_id', user.id).single()
+    .then(function(r) {
+        currentProfile = r.data;
+        var role = (currentProfile && currentProfile.role) || 'free';
+        document.getElementById('dashUsername').textContent = '@' + ((currentProfile && currentProfile.username) || 'user');
+        document.getElementById('dashEmail').textContent = user.email;
+        document.getElementById('dashRole').textContent = role.toUpperCase();
+        document.getElementById('dashJoined').textContent = new Date(user.created_at).toLocaleDateString();
+        var badge = document.getElementById('dashRoleBadge');
+        badge.textContent = role.toUpperCase();
+        badge.className = 'role-badge role-' + role;
+        return sb.from('license_keys').select('*').eq('user_id', user.id).maybeSingle();
+    })
+    .then(function(r) {
+        if (r && r.data) { showLinkedKey(r.data); }
+        else { showKeyEntry(); }
+    })
+    .catch(function(e) { console.error(e); showKeyEntry(); });
+}
+
+function showKeyEntry() {
+    document.getElementById('keyEntrySection').classList.remove('hidden');
+    document.getElementById('keyLinkedSection').classList.add('hidden');
+    document.getElementById('btnUnlink').classList.add('hidden');
+    document.getElementById('keyEntryStatus').classList.add('hidden');
+    document.getElementById('licenseKeyInput').value = '';
+}
+
+function showLinkedKey(keyData) {
+    currentKeyData = keyData;
+    document.getElementById('keyEntrySection').classList.add('hidden');
+    document.getElementById('keyLinkedSection').classList.remove('hidden');
+    document.getElementById('btnUnlink').classList.remove('hidden');
+    document.getElementById('linkedKeyValue').textContent = keyData.key_value;
+    document.getElementById('linkedKeyExpiry').textContent = keyData.expires_at
+        ? 'Expires: ' + new Date(keyData.expires_at).toLocaleDateString() : 'Expires: Never';
+
+    var role = (currentProfile && currentProfile.role) || keyData.role || 'free';
+    var isPremiumOrAbove = ['premium', 'admin', 'founder'].indexOf(role) !== -1;
+    var icon = document.getElementById('dashIcon');
+    var title = document.getElementById('dashTitle');
+    var desc = document.getElementById('dashDesc');
+
+    if (isPremiumOrAbove) {
+        icon.innerHTML = '<i class="fas fa-crown" style="color:#3b82f6"></i>';
+        title.textContent = 'Premium Loader';
+        desc.textContent = 'Full access - aimbot, silent aim, chams, ESP, all features.';
+    } else {
+        icon.innerHTML = '<i class="fas fa-download" style="color:var(--text-3)"></i>';
+        title.textContent = 'Free Loader';
+        desc.textContent = 'Basic features - ESP and basic aimbot.';
     }
 
-    var currentUser = null;
-    var currentProfile = null;
-    var currentKeyData = null;
-
-    function showSignUp() {
-        document.getElementById('loginCard').classList.add('hidden');
-        document.getElementById('signupCard').classList.remove('hidden');
-    }
-    function showLogin() {
-        document.getElementById('loginCard').classList.remove('hidden');
-        document.getElementById('signupCard').classList.add('hidden');
-    }
-    function showStatus(el, msg, type) { el.textContent = msg; el.className = 'status-msg ' + type; }
-    function showKeyStatus(el, msg, type) { el.textContent = msg; el.className = (type === 'error' ? 'error-text' : 'success-text'); el.classList.remove('hidden'); }
-    function setLoading(btn, loading, textId, spinnerId) {
-        btn.disabled = loading;
-        document.getElementById(textId).textContent = loading ? 'Please wait...' : (textId === 'loginBtnText' ? 'Sign In' : 'Create Account');
-        document.getElementById(spinnerId).classList.toggle('hidden', !loading);
-    }
-
-    function requireSupabase() {
-        if (!_supabase) { alert('Still loading. Please try again in a moment.'); return false; }
-        return true;
-    }
-
-    function handleSignUp() {
-        var username = document.getElementById('signupUsername').value.trim();
-        var email = document.getElementById('signupEmail').value.trim();
-        var password = document.getElementById('signupPassword').value;
-        var status = document.getElementById('signupStatus');
-        var btn = document.getElementById('btnSignup');
-
-        if (!username || !email || !password) { showStatus(status, 'All fields required.', 'error'); return; }
-        if (username.length < 3) { showStatus(status, 'Username must be 3+ characters.', 'error'); return; }
-        if (password.length < 6) { showStatus(status, 'Password must be 6+ characters.', 'error'); return; }
-        if (!/^[a-zA-Z0-9_]+$/.test(username)) { showStatus(status, 'Username: letters, numbers, underscore only.', 'error'); return; }
-        if (!requireSupabase()) return;
-
-        setLoading(btn, true, 'signupBtnText', 'signupSpinner');
-        _supabase.from('user_profiles').select('user_id').eq('username', username).maybeSingle()
-            .then(function(existing) {
-                if (existing.data) { showStatus(status, 'Username already taken.', 'error'); setLoading(btn, false, 'signupBtnText', 'signupSpinner'); return; }
-                return _supabase.auth.signUp({ email: email, password: password, options: { data: { username: username } } });
-            })
-            .then(function(result) {
-                if (!result) return;
-                if (result.error) { showStatus(status, result.error.message, 'error'); setLoading(btn, false, 'signupBtnText', 'signupSpinner'); return; }
-                showStatus(status, 'Account created! Signing in...', 'success');
-                setTimeout(function() { showLogin(); showStatus(document.getElementById('loginStatus'), 'Account created. Sign in.', 'success'); }, 1000);
-                setLoading(btn, false, 'signupBtnText', 'signupSpinner');
-            })
-            .catch(function(e) { showStatus(status, 'Connection error.', 'error'); setLoading(btn, false, 'signupBtnText', 'signupSpinner'); });
-    }
-
-    function handleSignIn() {
-        var email = document.getElementById('loginEmail').value.trim();
-        var password = document.getElementById('loginPassword').value;
-        var status = document.getElementById('loginStatus');
-        var btn = document.getElementById('btnLogin');
-
-        if (!email || !password) { showStatus(status, 'Enter email and password.', 'error'); return; }
-        if (!requireSupabase()) return;
-
-        setLoading(btn, true, 'loginBtnText', 'loginSpinner');
-        _supabase.auth.signInWithPassword({ email: email, password: password })
-            .then(function(result) {
-                if (result.error) { showStatus(status, result.error.message, 'error'); }
-            })
-            .catch(function(e) { showStatus(status, 'Connection error.', 'error'); })
-            .finally(function() { setLoading(btn, false, 'loginBtnText', 'loginSpinner'); });
-    }
-
-    function handleSignOut() {
-        if (!_supabase) return;
-        _supabase.auth.signOut().then(function() {
-            currentUser = null; currentProfile = null; currentKeyData = null;
-            document.getElementById('dashboardView').classList.add('hidden');
-            document.getElementById('authView').classList.remove('hidden');
-            showLogin();
-        });
-    }
-
-    function loadDashboard(user) {
-        currentUser = user;
-        document.getElementById('authView').classList.add('hidden');
-        document.getElementById('dashboardView').classList.remove('hidden');
-
-        _supabase.from('user_profiles').select('*').eq('user_id', user.id).single()
-            .then(function(result) {
-                currentProfile = result.data;
-                var role = (currentProfile && currentProfile.role) || 'free';
-                document.getElementById('dashUsername').textContent = '@' + ((currentProfile && currentProfile.username) || 'user');
-                document.getElementById('dashEmail').textContent = user.email;
-                document.getElementById('dashRole').textContent = role.toUpperCase();
-                document.getElementById('dashJoined').textContent = new Date(user.created_at).toLocaleDateString();
-                var badge = document.getElementById('dashRoleBadge');
-                badge.textContent = role.toUpperCase();
-                badge.className = 'role-badge role-' + role;
-
-                return _supabase.from('license_keys').select('*').eq('user_id', user.id).maybeSingle();
-            })
-            .then(function(result) {
-                if (result && result.data) { showLinkedKey(result.data); }
-                else { showKeyEntry(); }
-            })
-            .catch(function(e) { console.error('Dashboard load error:', e); showKeyEntry(); });
-    }
-
-    function showKeyEntry() {
-        document.getElementById('keyEntrySection').classList.remove('hidden');
-        document.getElementById('keyLinkedSection').classList.add('hidden');
-        document.getElementById('btnUnlink').classList.add('hidden');
-        document.getElementById('keyEntryStatus').classList.add('hidden');
-        document.getElementById('licenseKeyInput').value = '';
-    }
-
-    function showLinkedKey(keyData) {
-        currentKeyData = keyData;
-        document.getElementById('keyEntrySection').classList.add('hidden');
-        document.getElementById('keyLinkedSection').classList.remove('hidden');
-        document.getElementById('btnUnlink').classList.remove('hidden');
-
-        document.getElementById('linkedKeyValue').textContent = keyData.key_value;
-        document.getElementById('linkedKeyExpiry').textContent = keyData.expires_at
-            ? 'Expires: ' + new Date(keyData.expires_at).toLocaleDateString() : 'Expires: Never';
-
-        var role = (currentProfile && currentProfile.role) || keyData.role || 'free';
-        var isPremiumOrAbove = ['premium', 'admin', 'founder'].indexOf(role) !== -1;
-        var icon = document.getElementById('dashIcon');
-        var title = document.getElementById('dashTitle');
-        var desc = document.getElementById('dashDesc');
-
-        if (isPremiumOrAbove) {
-            icon.innerHTML = '<i class="fas fa-crown" style="color:#3b82f6"></i>';
-            title.textContent = 'Premium Loader';
-            desc.textContent = 'Full access \u2014 aimbot, silent aim, chams, ESP, all features.';
-        } else {
-            icon.innerHTML = '<i class="fas fa-download" style="color:var(--text-3)"></i>';
-            title.textContent = 'Free Loader';
-            desc.textContent = 'Basic features \u2014 ESP and basic aimbot.';
+    sb.from('app_config').select('*').then(function(r) {
+        var cfg = {};
+        if (r.data) r.data.forEach(function(row) { cfg[row.key] = row.value; });
+        document.getElementById('dashVersion').textContent = 'v' + (cfg.version || '1.0.0');
+        document.getElementById('dashChangelog').textContent = cfg.changelog || 'No changelog available.';
+        var dlUrl = isPremiumOrAbove ? cfg.download_premium_url : cfg.download_free_url;
+        var btn = document.getElementById('dashDownloadBtn');
+        if (dlUrl) {
+            btn.href = dlUrl;
+            btn.classList.remove('disabled');
+            btn.innerHTML = '<i class="fas fa-download"></i> Download Loader';
         }
+    });
+}
 
-        _supabase.from('app_config').select('*').then(function(result) {
-            var cfg = {};
-            if (result.data) result.data.forEach(function(r) { cfg[r.key] = r.value; });
-            document.getElementById('dashVersion').textContent = 'v' + (cfg.version || '1.0.0');
-            document.getElementById('dashChangelog').textContent = cfg.changelog || 'No changelog available.';
-            var dlUrl = isPremiumOrAbove ? cfg.download_premium_url : cfg.download_free_url;
-            var btn = document.getElementById('dashDownloadBtn');
-            if (dlUrl) { btn.href = dlUrl; btn.classList.remove('disabled'); btn.innerHTML = '<i class="fas fa-download"></i> Download Loader'; }
-            else { btn.href = '#'; btn.classList.add('disabled'); btn.innerHTML = '<i class="fas fa-clock"></i> Coming Soon'; }
-        });
-    }
+function handleLinkKey() {
+    var input = document.getElementById('licenseKeyInput');
+    var status = document.getElementById('keyEntryStatus');
+    var keyValue = input.value.trim().toUpperCase();
+    if (!keyValue) { showKeyStatus(status, 'Enter a license key.', 'error'); return; }
+    if (!requireDb()) return;
 
-    function handleLinkKey() {
-        var input = document.getElementById('licenseKeyInput');
-        var status = document.getElementById('keyEntryStatus');
-        var keyValue = input.value.trim().toUpperCase();
-        if (!keyValue) { showKeyStatus(status, 'Enter a license key.', 'error'); return; }
-        if (!requireSupabase()) return;
-
-        _supabase.from('license_keys').select('*').eq('key_value', keyValue).single()
-            .then(function(result) {
-                var key = result.data;
-                var error = result.error;
-                if (error || !key) { showKeyStatus(status, 'Key not found.', 'error'); return; }
-                if (!key.is_active) { showKeyStatus(status, 'Key has been revoked.', 'error'); return; }
-                if (key.expires_at && new Date(key.expires_at) < new Date()) { showKeyStatus(status, 'Key has expired.', 'error'); return; }
-                if (key.user_id && key.user_id !== currentUser.id) { showKeyStatus(status, 'Key is linked to another account.', 'error'); return; }
-
-                return _supabase.from('license_keys').update({ user_id: currentUser.id }).eq('key_value', keyValue);
-            })
-            .then(function(result) {
-                if (result && result.error) { showKeyStatus(status, 'Failed to link key.', 'error'); return; }
-                if (result) showKeyStatus(status, 'Key linked!', 'success');
-                return _supabase.from('license_keys').select('*').eq('key_value', keyValue).single();
-            })
-            .then(function(result) {
-                if (result && result.data) {
-                    if (result.data.role && result.data.role !== 'free' && currentProfile && currentProfile.role === 'free') {
-                        _supabase.from('user_profiles').update({ role: result.data.role }).eq('user_id', currentUser.id)
-                            .then(function() { currentProfile.role = result.data.role; });
-                    }
-                    setTimeout(function() { showLinkedKey(result.data); }, 500);
-                }
-            })
-            .catch(function(e) { showKeyStatus(status, 'Connection error.', 'error'); });
-    }
-
-    function handleUnlinkKey() {
-        if (!currentKeyData || !_supabase) return;
-        _supabase.from('license_keys').update({ user_id: null }).eq('key_value', currentKeyData.key_value)
-            .then(function() { currentKeyData = null; showKeyEntry(); });
-    }
-
-    // Particles
-    (function() {
-        var c = document.getElementById('particles');
-        if (!c) return;
-        for (var i = 0; i < 25; i++) {
-            var d = document.createElement('div');
-            d.className = 'dot';
-            d.style.left = Math.random()*100+'%';
-            d.style.top = Math.random()*100+'%';
-            d.style.animationDelay = Math.random()*8+'s';
-            d.style.animationDuration = (6+Math.random()*6)+'s';
-            c.appendChild(d);
+    sb.from('license_keys').select('*').eq('key_value', keyValue).single()
+    .then(function(r) {
+        var key = r.data;
+        if (r.error || !key) { showKeyStatus(status, 'Key not found.', 'error'); return; }
+        if (!key.is_active) { showKeyStatus(status, 'Key has been revoked.', 'error'); return; }
+        if (key.expires_at && new Date(key.expires_at) < new Date()) { showKeyStatus(status, 'Key has expired.', 'error'); return; }
+        if (key.user_id && key.user_id !== currentUser.id) { showKeyStatus(status, 'Key linked to another account.', 'error'); return; }
+        return sb.from('license_keys').update({ user_id: currentUser.id }).eq('key_value', keyValue);
+    })
+    .then(function(r) {
+        if (r && r.error) { showKeyStatus(status, 'Failed to link key.', 'error'); return; }
+        if (r) showKeyStatus(status, 'Key linked!', 'success');
+        return sb.from('license_keys').select('*').eq('key_value', keyValue).single();
+    })
+    .then(function(r) {
+        if (r && r.data) {
+            if (r.data.role && r.data.role !== 'free' && currentProfile && currentProfile.role === 'free') {
+                sb.from('user_profiles').update({ role: r.data.role }).eq('user_id', currentUser.id)
+                .then(function() { currentProfile.role = r.data.role; });
+            }
+            setTimeout(function() { showLinkedKey(r.data); }, 500);
         }
-    })();
+    })
+    .catch(function(e) { showKeyStatus(status, 'Connection error.', 'error'); });
+}
 
-    // Enter key handlers
-    document.getElementById('loginEmail') && document.getElementById('loginEmail').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSignIn(); });
-    document.getElementById('loginPassword') && document.getElementById('loginPassword').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSignIn(); });
-    document.getElementById('signupUsername') && document.getElementById('signupUsername').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSignUp(); });
-    document.getElementById('signupEmail') && document.getElementById('signupEmail').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSignUp(); });
-    document.getElementById('signupPassword') && document.getElementById('signupPassword').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSignUp(); });
-    document.getElementById('licenseKeyInput') && document.getElementById('licenseKeyInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleLinkKey(); });
-    </script>
+function handleUnlinkKey() {
+    if (!currentKeyData || !sb) return;
+    sb.from('license_keys').update({ user_id: null }).eq('key_value', currentKeyData.key_value)
+    .then(function() { currentKeyData = null; showKeyEntry(); });
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+    var c = document.getElementById('particles');
+    if (c) { for (var i = 0; i < 25; i++) { var d = document.createElement('div'); d.className = 'dot'; d.style.left = Math.random()*100+'%'; d.style.top = Math.random()*100+'%'; d.style.animationDelay = Math.random()*8+'s'; d.style.animationDuration = (6+Math.random()*6)+'s'; c.appendChild(d); } }
+
+    ['loginEmail','loginPassword'].forEach(function(id) { var el = document.getElementById(id); if (el) el.addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSignIn(); }); });
+    ['signupUsername','signupEmail','signupPassword'].forEach(function(id) { var el = document.getElementById(id); if (el) el.addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSignUp(); }); });
+    var ki = document.getElementById('licenseKeyInput'); if (ki) ki.addEventListener('keydown', function(e) { if (e.key === 'Enter') handleLinkKey(); });
+
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+    s.onload = function() { initSupabase(); };
+    s.onerror = function() { console.error('Failed to load Supabase SDK from CDN'); };
+    document.body.appendChild(s);
+});
+</script>
 </body>
 </html>
