@@ -85,6 +85,9 @@ body {
     display: block; font-size: 12px; font-weight: 600; color: var(--text-2);
     margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;
 }
+.input-wrap {
+    position: relative;
+}
 .input-group input, .input-group select, .input-group textarea {
     width: 100%; padding: 12px 14px; background: var(--bg-3); border: 1px solid var(--border);
     border-radius: var(--radius-sm); color: var(--text); font-family: inherit; font-size: 14px;
@@ -94,12 +97,12 @@ body {
     border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
 }
 .input-group input::placeholder, .input-group textarea::placeholder { color: var(--text-3); }
-.input-group i { position: absolute; left: 14px; top: 42px; color: var(--text-3); font-size: 14px; }
-.input-group input { padding-left: 40px; }
+.input-wrap > i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 14px; z-index: 1; }
+.input-wrap > input { padding-left: 40px; }
 .input-group select { padding-left: 14px; appearance: auto; }
 .toggle-pw {
-    position: absolute; right: 12px; top: 40px; background: none; border: none;
-    color: var(--text-3); cursor: pointer; font-size: 14px;
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none;
+    color: var(--text-3); cursor: pointer; font-size: 14px; z-index: 1;
 }
 
 .btn-login {

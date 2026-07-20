@@ -88,8 +88,8 @@
                     <p>Sign in to your account</p>
                 </div>
                 <div class="login-form">
-                    <div class="input-group"><i class="fas fa-envelope"></i><input type="email" id="loginEmail" placeholder="Email" autocomplete="email"></div>
-                    <div class="input-group"><i class="fas fa-lock"></i><input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password"></div>
+                    <div class="input-group"><div class="input-wrap"><i class="fas fa-envelope"></i><input type="email" id="loginEmail" placeholder="Email" autocomplete="email"></div></div>
+                    <div class="input-group"><div class="input-wrap"><i class="fas fa-lock"></i><input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password"></div></div>
                     <button id="btnLogin" class="btn-login" onclick="handleSignIn()"><span id="loginBtnText">Sign In</span><div id="loginSpinner" class="spinner hidden"></div></button>
                     <div id="loginStatus" class="status-msg hidden"></div>
                     <div class="auth-toggle">Don't have an account? <a onclick="showSignUp()">Sign Up</a></div>
@@ -109,9 +109,9 @@
                     <p>Create your account</p>
                 </div>
                 <div class="login-form">
-                    <div class="input-group"><i class="fas fa-user"></i><input type="text" id="signupUsername" placeholder="Username" autocomplete="username"></div>
-                    <div class="input-group"><i class="fas fa-envelope"></i><input type="email" id="signupEmail" placeholder="Email" autocomplete="email"></div>
-                    <div class="input-group"><i class="fas fa-lock"></i><input type="password" id="signupPassword" placeholder="Password" autocomplete="new-password"></div>
+                    <div class="input-group"><div class="input-wrap"><i class="fas fa-user"></i><input type="text" id="signupUsername" placeholder="Username" autocomplete="username"></div></div>
+                    <div class="input-group"><div class="input-wrap"><i class="fas fa-envelope"></i><input type="email" id="signupEmail" placeholder="Email" autocomplete="email"></div></div>
+                    <div class="input-group"><div class="input-wrap"><i class="fas fa-lock"></i><input type="password" id="signupPassword" placeholder="Password" autocomplete="new-password"></div></div>
                     <button id="btnSignup" class="btn-login" onclick="handleSignUp()"><span id="signupBtnText">Create Account</span><div id="signupSpinner" class="spinner hidden"></div></button>
                     <div id="signupStatus" class="status-msg hidden"></div>
                     <div class="auth-toggle">Already have an account? <a onclick="showLogin()">Sign In</a></div>

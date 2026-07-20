@@ -18,8 +18,8 @@
                 <h1>VYRON</h1><p>Admin Panel</p>
             </div>
             <div class="login-form">
-                <div class="input-group"><i class="fas fa-envelope"></i><input type="email" id="adminEmail" placeholder="Email address"></div>
-                <div class="input-group"><i class="fas fa-lock"></i><input type="password" id="adminPassword" placeholder="Password"><button type="button" class="toggle-pw" onclick="togglePassword()"><i class="fas fa-eye"></i></button></div>
+                <div class="input-group"><div class="input-wrap"><i class="fas fa-envelope"></i><input type="email" id="adminEmail" placeholder="Email address"></div></div>
+                <div class="input-group"><div class="input-wrap"><i class="fas fa-lock"></i><input type="password" id="adminPassword" placeholder="Password"><button type="button" class="toggle-pw" onclick="togglePassword()"><i class="fas fa-eye"></i></button></div></div>
                 <button id="btnAdminLogin" class="btn-login" onclick="handleAdminLogin()"><span id="adminLoginText">Sign In</span><div id="adminLoginSpinner" class="spinner hidden"></div></button>
                 <div id="adminLoginStatus" class="status-msg hidden"></div>
             </div>
