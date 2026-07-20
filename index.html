@@ -236,19 +236,22 @@ function handleSignUp() {
 
     setLoading(btn, true, 'signupBtnText', 'signupSpinner');
 
-    sb.from('user_profiles').select('user_id').eq('username', username).maybeSingle()
+    sb.auth.signUp({ email: email, password: password, options: { data: { username: username } } })
     .then(function(r) {
-        if (r.data) { showStatus(status, 'Username already taken.', 'error'); setLoading(btn, false, 'signupBtnText', 'signupSpinner'); return null; }
-        return sb.auth.signUp({ email: email, password: password, options: { data: { username: username } } });
-    })
-    .then(function(r) {
-        if (!r) return;
-        if (r.error) { showStatus(status, r.error.message, 'error'); setLoading(btn, false, 'signupBtnText', 'signupSpinner'); return; }
-        showStatus(status, 'Account created! Switching to sign in...', 'success');
+        if (r.error) {
+            var msg = r.error.message || 'Sign up failed.';
+            if (msg.includes('already')) msg = 'Email already registered.';
+            showStatus(status, msg, 'error');
+        } else {
+            showStatus(status, 'Account created! Switching to sign in...', 'success');
+            setTimeout(function() { showLogin(); showStatus(document.getElementById('loginStatus'), 'Account created. Sign in now.', 'success'); }, 1500);
+        }
         setLoading(btn, false, 'signupBtnText', 'signupSpinner');
-        setTimeout(function() { showLogin(); showStatus(document.getElementById('loginStatus'), 'Account created. Sign in now.', 'success'); }, 1000);
     })
-    .catch(function(e) { showStatus(status, 'Connection error.', 'error'); setLoading(btn, false, 'signupBtnText', 'signupSpinner'); });
+    .catch(function(e) {
+        showStatus(status, 'Connection error: ' + (e.message || e), 'error');
+        setLoading(btn, false, 'signupBtnText', 'signupSpinner');
+    });
 }
 
 function handleSignIn() {
