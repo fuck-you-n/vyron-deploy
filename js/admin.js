@@ -60,11 +60,12 @@ function showSection(name) {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const section = document.getElementById('section-' + name);
     if (section) section.classList.add('active');
-    const titles = { overview: 'Overview', keys: 'License Keys', plans: 'Plans & Downloads', users: 'Users', settings: 'Settings' };
+    const titles = { overview: 'Overview', keys: 'License Keys', plans: 'Plans & Downloads', users: 'Users', logs: 'Logs', settings: 'Settings' };
     document.getElementById('pageTitle').textContent = titles[name] || name;
     document.querySelectorAll('.nav-item').forEach(n => { if (n.querySelector('span')?.textContent.toLowerCase() === name) n.classList.add('active'); });
     if (name === 'plans') loadPlanConfig();
     if (name === 'users') loadUsers();
+    if (name === 'logs') loadLogs();
 }
 function toggleSidebar() { document.querySelector('.sidebar').classList.toggle('open'); }
 
@@ -119,7 +120,7 @@ function togglePassword() {
 
 // ===== DATA =====
 async function loadAllData() {
-    await Promise.all([loadKeys(), loadProfiles()]);
+    await Promise.all([loadKeys(), loadProfiles(), loadLogs()]);
 }
 
 async function loadKeys() {
@@ -439,4 +440,80 @@ async function executeResetPw() {
         console.error('[VYRON ADMIN] Reset password error:', e);
         showStatus(status, 'Connection error.', 'error');
     }
+}
+
+// ===== LOGS =====
+let allLogs = [];
+let logFilter = 'all';
+
+const EVENT_ICONS = {
+    login_success: { icon: 'fa-check-circle', color: 'green' },
+    login_failed: { icon: 'fa-times-circle', color: 'red' },
+    tier_selected: { icon: 'fa-layer-group', color: 'blue' },
+    tier_blocked: { icon: 'fa-ban', color: 'yellow' },
+    download_started: { icon: 'fa-download', color: 'blue' },
+    download_completed: { icon: 'fa-check', color: 'green' },
+    download_failed: { icon: 'fa-times', color: 'red' },
+    launch: { icon: 'fa-rocket', color: 'green' },
+    launch_failed: { icon: 'fa-bomb', color: 'red' },
+    dashboard_opened: { icon: 'fa-desktop', color: 'purple' },
+    logout: { icon: 'fa-right-from-bracket', color: 'yellow' },
+    error: { icon: 'fa-exclamation-triangle', color: 'red' },
+};
+
+async function loadLogs() {
+    const { data, error } = await window._supabase.from('logs').select('*').order('created_at', { ascending: false }).limit(500);
+    if (error) { console.error('Logs load error:', error); return; }
+    allLogs = data || [];
+    renderLogs();
+}
+
+function renderLogs() {
+    const tbody = document.getElementById('logsTableBody');
+    let filtered = allLogs;
+    if (logFilter === 'error') {
+        filtered = allLogs.filter(l => l.event.includes('fail') || l.event.includes('error') || l.event.includes('blocked'));
+    } else if (logFilter !== 'all') {
+        filtered = allLogs.filter(l => l.event === logFilter);
+    }
+
+    if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-row"><div class="empty-state"><i class="fas fa-inbox"></i><p>No logs</p></div></td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(l => {
+        const ev = EVENT_ICONS[l.event] || { icon: 'fa-circle', color: 'purple' };
+        const time = new Date(l.created_at).toLocaleString();
+        const user = l.user_email || '—';
+        const tier = l.tier || '—';
+        const detail = l.detail || '—';
+        const hwid = l.hwid ? l.hwid.substring(0, 16) + '...' : '—';
+        return `<tr>
+            <td style="font-size:11px;color:var(--text-3);white-space:nowrap">${time}</td>
+            <td><span class="badge badge-${ev.color}"><i class="fas ${ev.icon}"></i> ${l.event}</span></td>
+            <td style="font-size:12px">${user}</td>
+            <td style="font-size:12px">${tier}</td>
+            <td style="font-size:11px;color:var(--text-3);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${detail}">${detail}</td>
+            <td style="font-size:10px;color:var(--text-3);font-family:monospace">${hwid}</td>
+        </tr>`;
+    }).join('');
+}
+
+function filterLogs(f, btn) {
+    logFilter = f;
+    document.querySelectorAll('#section-logs .filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderLogs();
+}
+
+function exportLogs() {
+    if (!allLogs.length) { alert('No logs.'); return; }
+    const csv = ['Time,Event,User,Tier,Detail,HWID'];
+    allLogs.forEach(l => {
+        const time = new Date(l.created_at).toISOString();
+        csv.push(`${time},${l.event},"${(l.user_email||'').replace(/"/g,'""')}",${l.tier||''},"${(l.detail||'').replace(/"/g,'""')}",${l.hwid||''}`);
+    });
+    const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'vyron-logs.csv'; a.click();
 }

@@ -35,6 +35,7 @@
                 <a href="#" class="nav-item" onclick="showSection('keys')"><i class="fas fa-key"></i><span>License Keys</span></a>
                 <a href="#" class="nav-item" onclick="showSection('plans')"><i class="fas fa-crown"></i><span>Plans</span></a>
                 <a href="#" class="nav-item" onclick="showSection('users')"><i class="fas fa-users"></i><span>Users</span></a>
+                <a href="#" class="nav-item" onclick="showSection('logs')"><i class="fas fa-scroll"></i><span>Logs</span></a>
                 <a href="#" class="nav-item" onclick="showSection('settings')"><i class="fas fa-gear"></i><span>Settings</span></a>
             </nav>
             <div class="sidebar-footer">
@@ -72,7 +73,7 @@
                         <button class="quick-btn" onclick="showSection('keys'); showCreateModal();"><i class="fas fa-plus"></i><span>Create Key</span></button>
                         <button class="quick-btn" onclick="loadAllData()"><i class="fas fa-refresh"></i><span>Refresh</span></button>
                         <button class="quick-btn" onclick="exportKeys()"><i class="fas fa-file-export"></i><span>Export CSV</span></button>
-                        <button class="quick-btn" onclick="showSection('plans')"><i class="fas fa-crown"></i><span>Manage Plans</span></button>
+                        <button class="quick-btn" onclick="showSection('logs')"><i class="fas fa-scroll"></i><span>View Logs</span></button>
                     </div></div>
                 </div>
             </section>
@@ -129,6 +130,29 @@
             <section id="section-users" class="content-section">
                 <div class="section-header"><h3>Registered Users</h3><button class="btn btn-secondary" onclick="loadAllData()"><i class="fas fa-sync-alt"></i> Refresh</button></div>
                 <div class="card"><div class="table-wrapper"><table class="data-table"><thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Linked Key</th><th>Key Status</th><th>Joined</th><th>Actions</th></tr></thead><tbody id="usersTableBody"><tr><td colspan="7" class="empty-row"><div class="empty-state"><p>Loading...</p></div></td></tr></tbody></table></div></div>
+            </section>
+
+            <!-- LOGS -->
+            <section id="section-logs" class="content-section">
+                <div class="section-header">
+                    <h3>Logs</h3>
+                    <div class="section-actions">
+                        <button class="btn btn-secondary" onclick="exportLogs()"><i class="fas fa-file-export"></i> Export</button>
+                        <button class="btn btn-primary" onclick="loadLogs()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    </div>
+                </div>
+                <div class="filters-row">
+                    <button class="filter-btn active" onclick="filterLogs('all', this)">All</button>
+                    <button class="filter-btn" onclick="filterLogs('login_success', this)">Login</button>
+                    <button class="filter-btn" onclick="filterLogs('login_failed', this)">Login Failed</button>
+                    <button class="filter-btn" onclick="filterLogs('tier_selected', this)">Tier Select</button>
+                    <button class="filter-btn" onclick="filterLogs('download_started', this)">Download</button>
+                    <button class="filter-btn" onclick="filterLogs('launch', this)">Launch</button>
+                    <button class="filter-btn" onclick="filterLogs('error', this)">Errors</button>
+                </div>
+                <div class="card"><div class="table-wrapper"><table class="data-table"><thead><tr>
+                    <th>Time</th><th>Event</th><th>User</th><th>Tier</th><th>Detail</th><th>HWID</th>
+                </tr></thead><tbody id="logsTableBody"><tr><td colspan="6" class="empty-row"><div class="empty-state"><i class="fas fa-inbox"></><p>No logs</p></div></td></tr></tbody></table></div></div>
             </section>
 
             <!-- SETTINGS -->

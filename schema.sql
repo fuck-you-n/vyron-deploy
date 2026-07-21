@@ -152,3 +152,38 @@ INSERT INTO app_config (key, value) VALUES
     ('download_free_url', ''),
     ('changelog', '')
 ON CONFLICT (key) DO NOTHING;
+
+-- ===================== LOGS =====================
+
+CREATE TABLE IF NOT EXISTS logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event TEXT NOT NULL,
+    detail TEXT,
+    user_email TEXT,
+    tier TEXT,
+    hwid TEXT,
+    ip TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins full access on logs" ON logs;
+DROP POLICY IF EXISTS "Service role insert logs" ON logs;
+
+CREATE POLICY "Admins full access on logs"
+    ON logs FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE user_profiles.user_id = auth.uid()
+            AND user_profiles.role IN ('admin', 'founder')
+        )
+    );
+
+CREATE POLICY "Service role insert logs"
+    ON logs FOR INSERT
+    WITH CHECK (true);
+
+CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_logs_event ON logs(event);
