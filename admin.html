@@ -142,8 +142,8 @@
                     <div class="settings-group"><h4>Role Hierarchy</h4>
                         <div class="info-row"><span>Founder</span><span>Highest — manages admins, full control</span></div>
                         <div class="info-row"><span>Admin</span><span>Manages keys, plans, users</span></div>
-                        <div class="info-row"><span>Premium</span><span>Premium user — downloads premium loader</span></div>
-                        <div class="info-row"><span>Free</span><span>Free user — downloads free loader</span></div>
+                        <div class="info-row"><span>Premium</span><span>Premium user — full access loader</span></div>
+                        <div class="info-row"><span>Free</span><span>Free user — basic loader</span></div>
                     </div>
                     <div class="settings-group"><h4>Add Admin / Founder</h4>
                         <p class="text-muted" style="margin-bottom:12px">User must have a Supabase Auth account first (Dashboard → Auth → Users → Add User).</p>
@@ -166,7 +166,7 @@
                 <div class="input-group"><label>License Key</label><div class="input-with-btn"><input type="text" id="newKey" placeholder="Generate or type" spellcheck="false"><button class="btn btn-secondary" onclick="generateKey()"><i class="fas fa-dice"></i> Generate</button></div></div>
                 <div class="grid-2">
                     <div class="input-group"><label>Role / Plan</label><select id="newRole"><option value="free">Free</option><option value="premium" selected>Premium</option><option value="admin">Admin</option></select></div>
-                    <div class="input-group"><label>Expiry <span class="text-muted">(optional)</span></label><input type="date" id="newExpiry"></div>
+                    <div class="input-group"><label>Expiry</label><select id="newExpiry"><option value="">Lifetime (Never expires)</option><option value="1">1 Day</option><option value="7">7 Days</option><option value="30">30 Days</option><option value="90">90 Days</option><option value="365">1 Year</option></select></div>
                 </div>
                 <div id="createStatus" class="status-msg hidden"></div>
             </div>

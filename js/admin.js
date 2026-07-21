@@ -233,11 +233,15 @@ function closeCreateModal() { document.getElementById('createModal').classList.a
 async function createKey() {
     const key = document.getElementById('newKey').value.trim().toUpperCase();
     const role = document.getElementById('newRole').value;
-    const expiry = document.getElementById('newExpiry').value;
+    const durationDays = document.getElementById('newExpiry').value;
     const status = document.getElementById('createStatus');
     if (!key) { showStatus(status, 'Enter or generate a key.', 'error'); return; }
     const payload = { key_value: key, role, is_active: true };
-    if (expiry) payload.expires_at = new Date(expiry).toISOString();
+    if (durationDays) {
+        const expires = new Date();
+        expires.setDate(expires.getDate() + parseInt(durationDays));
+        payload.expires_at = expires.toISOString();
+    }
     const { error } = await window._supabase.from('license_keys').insert(payload);
     if (error) { showStatus(status, error.message, 'error'); return; }
     showStatus(status, 'Created: ' + key, 'success');
@@ -282,8 +286,8 @@ async function loadPlanConfig() {
     document.getElementById('plansGrid').innerHTML = [
         { role: 'founder', icon: 'fa-star', color: '#f59e0b', name: 'Founder', desc: 'Full control — manages admins, all access' },
         { role: 'admin', icon: 'fa-shield', color: '#6c3fea', name: 'Admin', desc: 'Manages keys, plans, and users' },
-        { role: 'premium', icon: 'fa-crown', color: '#3b82f6', name: 'Premium', desc: 'Premium cheat loader with all features' },
-        { role: 'free', icon: 'fa-user', color: '#606080', name: 'Free', desc: 'Basic free cheat loader' },
+        { role: 'premium', icon: 'fa-crown', color: '#3b82f6', name: 'Premium', desc: 'Full access loader with all features' },
+        { role: 'free', icon: 'fa-user', color: '#606080', name: 'Free', desc: 'Basic loader with limited features' },
     ].map(p => `<div class="plan-card" style="text-align:center;padding:28px 20px">
         <div style="font-size:28px;color:${p.color};margin-bottom:12px"><i class="fas ${p.icon}"></i></div>
         <h4 style="margin-bottom:4px">${p.name}</h4>

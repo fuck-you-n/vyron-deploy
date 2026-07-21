@@ -158,12 +158,25 @@
                         </div>
                     </div>
                     <div class="download-card">
-                        <div class="icon" id="dashIcon"><i class="fas fa-crown" style="color:#3b82f6"></i></div>
-                        <h3 id="dashTitle">Premium Loader</h3>
-                        <p id="dashDesc">Full access to all features.</p>
+                        <h3 id="dashTitle">Loader</h3>
                         <div class="version-tag" id="dashVersion">v1.0.0</div>
-                        <br>
-                        <a id="dashDownloadBtn" class="btn-download disabled" href="#"><i class="fas fa-clock"></i> Coming Soon</a>
+                        <p style="color:var(--text-3);font-size:13px;margin-bottom:16px">Select which loader to launch:</p>
+                        <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px">
+                            <button id="btnSelectFree" class="btn-download" style="background:linear-gradient(135deg,#444,#555)" onclick="selectLoaderTier('free')"><i class="fas fa-download"></i> Free Loader</button>
+                            <button id="btnSelectPremium" class="btn-download" style="background:linear-gradient(135deg,#6c3fea,#5530d0)" onclick="selectLoaderTier('premium')"><i class="fas fa-crown"></i> Premium Loader</button>
+                        </div>
+                        <p id="dashDesc" style="font-size:12px;color:var(--text-3)">Select a tier above to continue.</p>
+                        <a id="dashDownloadBtn" class="btn-download disabled" href="#" style="display:none"><i class="fas fa-download"></i> Download</a>
+                    </div>
+                    <div id="premiumUpsell" class="hidden" style="background:var(--bg-2);border:1px solid rgba(108,63,234,.3);border-radius:var(--radius);padding:24px;margin-bottom:20px;text-align:center">
+                        <i class="fas fa-lock" style="font-size:36px;color:var(--accent);margin-bottom:12px;display:block"></i>
+                        <h4 style="margin-bottom:8px">Premium Required</h4>
+                        <p style="color:var(--text-3);font-size:13px;margin-bottom:16px">You need a premium key to access the premium loader.<br>Link a premium key below to unlock it.</p>
+                        <div class="input-row" style="max-width:400px;margin:0 auto">
+                            <input type="text" id="premiumKeyInput" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" style="flex:1;padding:12px 16px;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-1);font-family:'Courier New',monospace;font-size:14px;text-transform:uppercase;letter-spacing:1px">
+                            <button onclick="handleLinkPremiumKey()" style="padding:12px 24px;background:var(--accent);border:none;border-radius:var(--radius-sm);color:white;font-family:inherit;font-weight:700;cursor:pointer;white-space:nowrap">Link</button>
+                        </div>
+                        <div id="premiumKeyStatus" class="hidden" style="margin-top:8px"></div>
                     </div>
                     <div class="changelog-card">
                         <h4><i class="fas fa-scroll"></i> What's New</h4>
@@ -407,36 +420,96 @@ function showLinkedKey(keyData) {
     document.getElementById('linkedKeyValue').textContent = keyData.key_value;
     document.getElementById('linkedKeyExpiry').textContent = keyData.expires_at
         ? 'Expires: ' + new Date(keyData.expires_at).toLocaleDateString() : 'Expires: Never';
+    document.getElementById('premiumUpsell').classList.add('hidden');
 
-    var role = (currentProfile && currentProfile.role) || keyData.role || 'free';
-    var isPremiumOrAbove = ['premium', 'admin', 'founder'].indexOf(role) !== -1;
-    var icon = document.getElementById('dashIcon');
-    var title = document.getElementById('dashTitle');
-    var desc = document.getElementById('dashDesc');
+    var keyRole = keyData.role || 'free';
+    var isPremium = ['premium', 'admin', 'founder'].indexOf(keyRole) !== -1;
 
-    if (isPremiumOrAbove) {
-        icon.innerHTML = '<i class="fas fa-crown" style="color:#3b82f6"></i>';
-        title.textContent = 'Premium Loader';
-        desc.textContent = 'Full access - aimbot, silent aim, chams, ESP, all features.';
-    } else {
-        icon.innerHTML = '<i class="fas fa-download" style="color:var(--text-3)"></i>';
-        title.textContent = 'Free Loader';
-        desc.textContent = 'Basic features - ESP and basic aimbot.';
-    }
+    document.getElementById('btnSelectPremium').style.opacity = isPremium ? '1' : '0.5';
+    document.getElementById('btnSelectPremium').title = isPremium ? '' : 'Requires premium key';
 
     sb.from('app_config').select('*').then(function(r) {
         var cfg = {};
         if (r.data) r.data.forEach(function(row) { cfg[row.key] = row.value; });
         document.getElementById('dashVersion').textContent = 'v' + (cfg.version || '1.0.0');
         document.getElementById('dashChangelog').textContent = cfg.changelog || 'No changelog available.';
-        var dlUrl = isPremiumOrAbove ? cfg.download_premium_url : cfg.download_free_url;
-        var btn = document.getElementById('dashDownloadBtn');
+        window._vyronCfg = cfg;
+    });
+}
+
+function selectLoaderTier(tier) {
+    var keyRole = (currentKeyData && currentKeyData.role) || 'free';
+    var isPremium = ['premium', 'admin', 'founder'].indexOf(keyRole) !== -1;
+    var cfg = window._vyronCfg || {};
+    var desc = document.getElementById('dashDesc');
+    var btn = document.getElementById('dashDownloadBtn');
+    var upsell = document.getElementById('premiumUpsell');
+
+    upsell.classList.add('hidden');
+
+    if (tier === 'premium' && !isPremium) {
+        desc.textContent = 'You need a premium key for this.';
+        desc.style.color = 'var(--red)';
+        btn.style.display = 'none';
+        upsell.classList.remove('hidden');
+        return;
+    }
+
+    desc.style.color = 'var(--text-3)';
+    if (tier === 'premium') {
+        desc.textContent = 'Premium — full access: aimbot, silent aim, chams, ESP, all features.';
+        var dlUrl = cfg.download_premium_url || cfg.download_url || '';
         if (dlUrl) {
             btn.href = dlUrl;
             btn.classList.remove('disabled');
-            btn.innerHTML = '<i class="fas fa-download"></i> Download Loader';
+            btn.innerHTML = '<i class="fas fa-download"></i> Download Premium Loader';
+            btn.style.display = 'inline-flex';
         }
-    });
+    } else {
+        desc.textContent = 'Free — basic features: ESP and basic aimbot.';
+        var dlUrl = cfg.download_free_url || cfg.download_url || '';
+        if (dlUrl) {
+            btn.href = dlUrl;
+            btn.classList.remove('disabled');
+            btn.innerHTML = '<i class="fas fa-download"></i> Download Free Loader';
+            btn.style.display = 'inline-flex';
+        }
+    }
+}
+
+function handleLinkPremiumKey() {
+    var input = document.getElementById('premiumKeyInput');
+    var status = document.getElementById('premiumKeyStatus');
+    var keyValue = input.value.trim().toUpperCase();
+    if (!keyValue) { showKeyStatus(status, 'Enter a premium key.', 'error'); return; }
+    if (!requireDb()) return;
+
+    sb.from('license_keys').select('*').eq('key_value', keyValue).single()
+    .then(function(r) {
+        var key = r.data;
+        if (r.error || !key) { showKeyStatus(status, 'Key not found.', 'error'); return; }
+        if (!key.is_active) { showKeyStatus(status, 'Key has been revoked.', 'error'); return; }
+        if (key.expires_at && new Date(key.expires_at) < new Date()) { showKeyStatus(status, 'Key has expired.', 'error'); return; }
+        if (key.user_id && key.user_id !== currentUser.id) { showKeyStatus(status, 'Key linked to another account.', 'error'); return; }
+        var keyRole = key.role || 'free';
+        if (['premium', 'admin', 'founder'].indexOf(keyRole) === -1) { showKeyStatus(status, 'This is not a premium key.', 'error'); return; }
+        return sb.from('license_keys').update({ user_id: currentUser.id }).eq('key_value', keyValue);
+    })
+    .then(function(r) {
+        if (r && r.error) { showKeyStatus(status, 'Failed to link key.', 'error'); return; }
+        if (r) showKeyStatus(status, 'Premium key linked!', 'success');
+        return sb.from('license_keys').select('*').eq('key_value', keyValue).single();
+    })
+    .then(function(r) {
+        if (r && r.data) {
+            if (r.data.role && r.data.role !== 'free' && currentProfile && currentProfile.role === 'free') {
+                sb.from('user_profiles').update({ role: r.data.role }).eq('user_id', currentUser.id)
+                .then(function() { currentProfile.role = r.data.role; });
+            }
+            setTimeout(function() { showLinkedKey(r.data); }, 500);
+        }
+    })
+    .catch(function(e) { showKeyStatus(status, 'Connection error.', 'error'); });
 }
 
 function handleLinkKey() {

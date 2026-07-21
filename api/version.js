@@ -32,7 +32,11 @@ module.exports = async function handler(req, res) {
                     if (cfg.version) version = cfg.version;
                     if (cfg.changelog) changelog = cfg.changelog;
 
-                    downloadUrl = cfg.download_url || cfg.download_premium_url || cfg.download_free_url || '';
+                    if (tier === 'premium') {
+                        downloadUrl = cfg.download_premium_url || cfg.download_url || '';
+                    } else {
+                        downloadUrl = cfg.download_free_url || cfg.download_url || '';
+                    }
                 }
             } catch (e) {
                 console.error('DB lookup failed, using config.json:', e.message);
@@ -41,9 +45,14 @@ module.exports = async function handler(req, res) {
 
         // Fallback to config.json download_url
         if (!downloadUrl) {
-            downloadUrl = config.download_url || '';
+            const configPath2 = path.join(process.cwd(), 'config.json');
+            if (fs.existsSync(configPath2)) {
+                const cfg2 = JSON.parse(fs.readFileSync(configPath2, 'utf-8'));
+                downloadUrl = cfg2.download_url || '';
+            }
         }
 
+        // Final fallback: unified download endpoint
         if (!downloadUrl) {
             const proto = req.headers['x-forwarded-proto'] || 'https';
             const host = req.headers.host;

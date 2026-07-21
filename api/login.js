@@ -91,12 +91,22 @@ module.exports = async function handler(req, res) {
                 .eq('user_id', userId);
         }
 
+        let expires = null;
+        const { data: linkedKey } = await supabase
+            .from('license_keys')
+            .select('expires_at')
+            .eq('user_id', userId)
+            .maybeSingle();
+        if (linkedKey && linkedKey.expires_at) {
+            expires = linkedKey.expires_at;
+        }
+
         return res.json({
             valid: true,
             username: profile.username || loginEmail.split('@')[0],
             tier: profile.tier || profile.role || 'free',
             role: profile.role || 'free',
-            expires: profile.expire_date || null
+            expires: expires
         });
 
     } catch (err) {
