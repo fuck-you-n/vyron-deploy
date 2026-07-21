@@ -314,10 +314,15 @@ function loadDashboard(user) {
     document.getElementById('authView').classList.add('hidden');
     document.getElementById('dashboardView').classList.remove('hidden');
 
+    console.log('[VYRON] loadDashboard for user:', user.id, user.email);
+
     sb.from('user_profiles').select('*').eq('user_id', user.id).single()
     .then(function(r) {
+        console.log('[VYRON] Profile query result:', JSON.stringify(r));
+        if (r.error) { console.error('[VYRON] Profile query error:', r.error); }
         currentProfile = r.data;
         var role = (currentProfile && currentProfile.role) || 'free';
+        console.log('[VYRON] Resolved role:', role);
         document.getElementById('dashUsername').textContent = '@' + ((currentProfile && currentProfile.username) || 'user');
         document.getElementById('dashEmail').textContent = user.email;
         document.getElementById('dashRole').textContent = role.toUpperCase();
@@ -331,7 +336,7 @@ function loadDashboard(user) {
         if (r && r.data) { showLinkedKey(r.data); }
         else { showKeyEntry(); }
     })
-    .catch(function(e) { console.error(e); showKeyEntry(); });
+    .catch(function(e) { console.error('[VYRON] loadDashboard error:', e); showKeyEntry(); });
 }
 
 function showKeyEntry() {

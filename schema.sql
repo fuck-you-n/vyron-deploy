@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS user_profiles (
 
 -- ===================== RLS =====================
 
--- license_keys
+-- ===================== license_keys RLS =====================
 ALTER TABLE license_keys ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public read for validation" ON license_keys;
@@ -64,17 +64,6 @@ DROP POLICY IF EXISTS "Authenticated read for linking" ON license_keys;
 -- Anyone can read keys (for API validation)
 CREATE POLICY "Public read for validation"
     ON license_keys FOR SELECT USING (true);
-
--- Admin + Founder full access (via user_profiles role)
-CREATE POLICY "Admins and Founders full access"
-    ON license_keys FOR ALL
-    USING (
-        EXISTS (
-            SELECT 1 FROM user_profiles
-            WHERE user_profiles.user_id = auth.uid()
-            AND user_profiles.role IN ('admin', 'founder')
-        )
-    );
 
 -- Authenticated users can link unlinked keys to their account
 CREATE POLICY "Link key to own account"
@@ -93,7 +82,18 @@ CREATE POLICY "Read own linked key"
         AND user_id = auth.uid()
     );
 
--- app_config
+-- Admin + Founder full access (checks user_profiles — no recursion since user_profiles is wide-open for reads)
+CREATE POLICY "Admins and Founders full access"
+    ON license_keys FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE user_profiles.user_id = auth.uid()
+            AND user_profiles.role IN ('admin', 'founder')
+        )
+    );
+
+-- ===================== app_config RLS =====================
 ALTER TABLE app_config ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public read config" ON app_config;
@@ -112,32 +112,29 @@ CREATE POLICY "Admin write config"
         )
     );
 
--- user_profiles
+-- ===================== user_profiles RLS =====================
+-- FIXED: No recursive policies. Any authenticated user can read all profiles.
+-- Usernames and roles are not sensitive data, and the admin panel needs
+-- to read all profiles. This eliminates the chicken-and-egg problem.
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users read own profile" ON user_profiles;
 DROP POLICY IF EXISTS "Admins read all profiles" ON user_profiles;
 DROP POLICY IF EXISTS "Users insert own profile" ON user_profiles;
 DROP POLICY IF EXISTS "Users update own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Authenticated read profiles" ON user_profiles;
 
-CREATE POLICY "Users read own profile"
+-- Any authenticated user can read any profile (usernames/roles are not secret)
+CREATE POLICY "Authenticated read profiles"
     ON user_profiles FOR SELECT
-    USING (auth.uid() = user_id);
+    USING (auth.uid() IS NOT NULL);
 
-CREATE POLICY "Admins read all profiles"
-    ON user_profiles FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM user_profiles up
-            WHERE up.user_id = auth.uid()
-            AND up.role IN ('admin', 'founder')
-        )
-    );
-
+-- Users can insert their own profile (during signup)
 CREATE POLICY "Users insert own profile"
     ON user_profiles FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
+-- Users can update their own profile
 CREATE POLICY "Users update own profile"
     ON user_profiles FOR UPDATE
     USING (auth.uid() = user_id)
@@ -155,7 +152,3 @@ INSERT INTO app_config (key, value) VALUES
     ('download_free_url', ''),
     ('changelog', '')
 ON CONFLICT (key) DO NOTHING;
-
--- ===================== FOUNDER SETUP =====================
-
--- First user to sign up gets founder automatically via trigger

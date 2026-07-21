@@ -18,13 +18,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if (!window._supabase) { alert('Failed to load Supabase. Refresh the page.'); return; }
     window._supabase = window._supabase; // ensure window._supabase alias works
-    const { data } = await window._supabase.auth.getSession();
+    console.log('[VYRON ADMIN] Supabase loaded, checking session...');
+    const { data, error: sessErr } = await window._supabase.auth.getSession();
+    console.log('[VYRON ADMIN] Session:', data.session ? 'exists' : 'none', sessErr || '');
     if (data.session) {
-        const { data: profile } = await window._supabase.from('user_profiles').select('*').eq('user_id', data.session.user.id).single();
+        console.log('[VYRON ADMIN] User ID:', data.session.user.id, 'Email:', data.session.user.email);
+        const { data: profile, error: profileErr } = await window._supabase.from('user_profiles').select('*').eq('user_id', data.session.user.id).single();
+        console.log('[VYRON ADMIN] Profile query result:', JSON.stringify(profile), 'Error:', profileErr || 'none');
         if (profile && ROLE_HIERARCHY[profile.role] >= ROLE_HIERARCHY['admin']) {
+            console.log('[VYRON ADMIN] Access granted, role:', profile.role);
             currentSession = data.session;
             currentProfile = profile;
             showDashboard();
+        } else {
+            console.log('[VYRON ADMIN] Access denied. Profile:', profile ? profile.role : 'null');
         }
     }
 });
@@ -75,15 +82,27 @@ async function handleAdminLogin() {
         const { data, error } = await window._supabase.auth.signInWithPassword({ email, password });
         if (error) { showStatus(status, error.message, 'error'); return; }
 
+        console.log('[VYRON ADMIN] Login success, user ID:', data.user.id);
         // Check role from user_profiles
-        const { data: profile } = await window._supabase.from('user_profiles').select('*').eq('user_id', data.user.id).single();
-        if (!profile || ROLE_HIERARCHY[profile.role] < ROLE_HIERARCHY['admin']) {
-            showStatus(status, 'Access denied — admin role required.', 'error');
+        const { data: profile, error: profileErr } = await window._supabase.from('user_profiles').select('*').eq('user_id', data.user.id).single();
+        console.log('[VYRON ADMIN] Profile after login:', JSON.stringify(profile), 'Error:', profileErr || 'none');
+        if (!profile) {
+            console.error('[VYRON ADMIN] No profile row found for user. Creating one...');
+            // Auto-create profile if missing
+            const username = data.user.user_metadata && data.user.user_metadata.username ? data.user.user_metadata.username : email.split('@')[0];
+            const { error: insertErr } = await window._supabase.from('user_profiles').insert({ user_id: data.user.id, username: username, role: 'free' });
+            console.log('[VYRON ADMIN] Auto-created profile, error:', insertErr || 'none');
+            showStatus(status, 'No profile found. A free profile was auto-created. Set your role via SQL Editor.', 'error');
+            await window._supabase.auth.signOut(); return;
+        }
+        if (ROLE_HIERARCHY[profile.role] < ROLE_HIERARCHY['admin']) {
+            console.log('[VYRON ADMIN] Role too low:', profile.role, 'need admin+');
+            showStatus(status, 'Access denied — admin role required. Your role: ' + profile.role, 'error');
             await window._supabase.auth.signOut(); return;
         }
         currentSession = data.session; currentProfile = profile;
         showDashboard();
-    } catch (e) { showStatus(status, 'Login failed.', 'error'); }
+    } catch (e) { console.error('[VYRON ADMIN] Login error:', e); showStatus(status, 'Login failed.', 'error'); }
     finally { btn.disabled = false; btnText.textContent = 'Sign In'; spinner.classList.add('hidden'); }
 }
 async function handleLogout() {
