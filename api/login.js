@@ -5,35 +5,30 @@ module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
-    if (req.method !== 'POST') {
-        return res.status(405).json({ valid: false, reason: 'Method not allowed.' });
-    }
+    if (req.method === 'OPTIONS') return res.status(200).end();
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed.' });
 
     try {
-        if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-            console.error('Missing env vars:', { url: !!process.env.SUPABASE_URL, key: !!process.env.SUPABASE_SERVICE_KEY });
-            return res.status(500).json({ valid: false, reason: 'Server configuration error.' });
-        }
-
-        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-
         let body = req.body;
         if (typeof body === 'string') {
             body = JSON.parse(body);
         }
 
-        const { email, password, hwid } = body;
+        if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+            return res.status(500).json({ valid: false, reason: 'No env vars.' });
+        }
+
+        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
+        const email = body.email;
+        const password = body.password;
+        const hwid = body.hwid;
 
         if (!email || !password) {
             return res.status(400).json({ valid: false, reason: 'Missing email or password.' });
         }
 
         const input = email.trim().toLowerCase();
-
         let loginEmail = input;
 
         if (!input.includes('@')) {
@@ -72,19 +67,12 @@ module.exports = async function handler(req, res) {
             .single();
 
         if (profileErr || !profile) {
-            const { error: insertErr } = await supabase
-                .from('user_profiles')
-                .insert({
-                    user_id: userId,
-                    username: authData.user.user_metadata?.username || loginEmail.split('@')[0],
-                    role: 'free',
-                    tier: 'free'
-                });
-
-            if (insertErr) {
-                console.error('Failed to create profile:', insertErr);
-            }
-
+            await supabase.from('user_profiles').insert({
+                user_id: userId,
+                username: authData.user.user_metadata?.username || loginEmail.split('@')[0],
+                role: 'free',
+                tier: 'free'
+            });
             return res.json({
                 valid: true,
                 username: authData.user.user_metadata?.username || loginEmail.split('@')[0],
