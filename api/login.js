@@ -6,23 +6,26 @@ module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed.' });
+    if (req.method !== 'POST') return res.status(405).json({ valid: false, reason: 'Method not allowed.' });
 
     try {
-        let body = req.body;
-        if (typeof body === 'string') {
-            body = JSON.parse(body);
-        }
-
         if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
             return res.status(500).json({ valid: false, reason: 'No env vars.' });
         }
 
+        let body = req.body;
+        if (!body) {
+            const chunks = [];
+            for await (const chunk of req) chunks.push(chunk);
+            const raw = Buffer.concat(chunks).toString();
+            body = raw ? JSON.parse(raw) : {};
+        } else if (typeof body === 'string') {
+            body = JSON.parse(body);
+        }
+
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
-        const email = body.email;
-        const password = body.password;
-        const hwid = body.hwid;
+        const { email, password, hwid } = body;
 
         if (!email || !password) {
             return res.status(400).json({ valid: false, reason: 'Missing email or password.' });
@@ -60,13 +63,13 @@ module.exports = async function handler(req, res) {
 
         const userId = authData.user.id;
 
-        const { data: profile, error: profileErr } = await supabase
+        const { data: profile } = await supabase
             .from('user_profiles')
             .select('*')
             .eq('user_id', userId)
             .single();
 
-        if (profileErr || !profile) {
+        if (!profile) {
             await supabase.from('user_profiles').insert({
                 user_id: userId,
                 username: authData.user.user_metadata?.username || loginEmail.split('@')[0],
@@ -99,6 +102,6 @@ module.exports = async function handler(req, res) {
 
     } catch (err) {
         console.error('Login error:', err);
-        return res.status(500).json({ valid: false, reason: 'Server error: ' + err.message });
+        return res.status(500).json({ valid: false, reason: err.message });
     }
 };
