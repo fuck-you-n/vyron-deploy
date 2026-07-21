@@ -443,15 +443,19 @@ function showTierSelect() {
     document.getElementById('dashBackBtn').style.display = 'none';
     document.getElementById('premiumUpsell').classList.add('hidden');
 
+    var profileRole = (currentProfile && currentProfile.role) || 'free';
     var keyRole = (currentKeyData && currentKeyData.role) || 'free';
-    var isPremium = ['premium', 'admin', 'founder'].indexOf(keyRole) !== -1;
+    var isPremium = ['premium', 'admin', 'founder'].indexOf(profileRole) !== -1
+                 || ['premium', 'admin', 'founder'].indexOf(keyRole) !== -1;
     document.getElementById('btnSelectPremium').style.opacity = isPremium ? '1' : '0.5';
     document.getElementById('btnSelectPremium').title = isPremium ? '' : 'Requires premium key';
 }
 
 function selectLoaderTier(tier) {
+    var profileRole = (currentProfile && currentProfile.role) || 'free';
     var keyRole = (currentKeyData && currentKeyData.role) || 'free';
-    var isPremium = ['premium', 'admin', 'founder'].indexOf(keyRole) !== -1;
+    var isPremium = ['premium', 'admin', 'founder'].indexOf(profileRole) !== -1
+                 || ['premium', 'admin', 'founder'].indexOf(keyRole) !== -1;
     var cfg = window._vyronCfg || {};
     var desc = document.getElementById('dashDesc');
     var btn = document.getElementById('dashDownloadBtn');

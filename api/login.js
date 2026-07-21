@@ -92,13 +92,15 @@ module.exports = async function handler(req, res) {
         }
 
         let expires = null;
+        let keyRole = null;
         const { data: linkedKey } = await supabase
             .from('license_keys')
-            .select('expires_at')
+            .select('expires_at, role')
             .eq('user_id', userId)
             .maybeSingle();
-        if (linkedKey && linkedKey.expires_at) {
-            expires = linkedKey.expires_at;
+        if (linkedKey) {
+            if (linkedKey.expires_at) expires = linkedKey.expires_at;
+            if (linkedKey.role) keyRole = linkedKey.role;
         }
 
         return res.json({
@@ -106,6 +108,7 @@ module.exports = async function handler(req, res) {
             username: profile.username || loginEmail.split('@')[0],
             tier: profile.tier || profile.role || 'free',
             role: profile.role || 'free',
+            key_role: keyRole || 'free',
             expires: expires
         });
 
