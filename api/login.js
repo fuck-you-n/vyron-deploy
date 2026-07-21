@@ -8,27 +8,26 @@ module.exports = async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ valid: false, reason: 'Method not allowed.' });
 
-    try {
-        if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-            return res.status(500).json({ valid: false, reason: 'No env vars.' });
-        }
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+        return res.status(500).json({ valid: false, reason: 'No env vars.' });
+    }
 
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
+    try {
         let body = req.body;
         if (!body) {
-            const chunks = [];
-            for await (const chunk of req) chunks.push(chunk);
-            const raw = Buffer.concat(chunks).toString();
-            body = raw ? JSON.parse(raw) : {};
+            body = {};
         } else if (typeof body === 'string') {
             body = JSON.parse(body);
         }
 
-        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-
-        const { email, password, hwid } = body;
+        const email = body.email;
+        const password = body.password;
+        const hwid = body.hwid;
 
         if (!email || !password) {
-            return res.status(400).json({ valid: false, reason: 'Missing email or password.' });
+            return res.json({ valid: false, reason: 'Missing email or password.' });
         }
 
         const input = email.trim().toLowerCase();
