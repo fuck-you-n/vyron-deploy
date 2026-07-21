@@ -21,7 +21,12 @@ module.exports = async function handler(req, res) {
 
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
-        const { email, password, hwid } = req.body;
+        let body = req.body;
+        if (typeof body === 'string') {
+            body = JSON.parse(body);
+        }
+
+        const { email, password, hwid } = body;
 
         if (!email || !password) {
             return res.status(400).json({ valid: false, reason: 'Missing email or password.' });
