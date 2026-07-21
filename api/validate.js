@@ -1,10 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY
-);
-
 module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -19,6 +14,12 @@ module.exports = async function handler(req, res) {
     }
 
     try {
+        if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+            return res.status(500).json({ valid: false, reason: 'Server configuration error.' });
+        }
+
+        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
         const { key, hwid } = req.body;
 
         if (!key || typeof key !== 'string') {
