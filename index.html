@@ -162,11 +162,12 @@
                         <div class="version-tag" id="dashVersion">v1.0.0</div>
                         <p style="color:var(--text-3);font-size:13px;margin-bottom:16px">Select which loader to launch:</p>
                         <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px">
-                            <button id="btnSelectFree" class="btn-download" style="background:linear-gradient(135deg,#444,#555)" onclick="selectLoaderTier('free')"><i class="fas fa-download"></i> Free Loader</button>
+                            <button id="btnSelectFree" class="btn-download" style="background:linear-gradient(135deg,#444,#555)" onclick="selectLoaderTier('free')"><i class="fas fa-wrench"></i> Free Loader (In Dev)</button>
                             <button id="btnSelectPremium" class="btn-download" style="background:linear-gradient(135deg,#6c3fea,#5530d0)" onclick="selectLoaderTier('premium')"><i class="fas fa-crown"></i> Premium Loader</button>
                         </div>
                         <p id="dashDesc" style="font-size:12px;color:var(--text-3)">Select a tier above to continue.</p>
                         <a id="dashDownloadBtn" class="btn-download disabled" href="#" style="display:none"><i class="fas fa-download"></i> Download</a>
+                        <button id="dashBackBtn" class="btn-download" style="display:none;background:linear-gradient(135deg,#333,#444);margin-top:10px" onclick="showTierSelect()"><i class="fas fa-arrow-left"></i> Back</button>
                     </div>
                     <div id="premiumUpsell" class="hidden" style="background:var(--bg-2);border:1px solid rgba(108,63,234,.3);border-radius:var(--radius);padding:24px;margin-bottom:20px;text-align:center">
                         <i class="fas fa-lock" style="font-size:36px;color:var(--accent);margin-bottom:12px;display:block"></i>
@@ -422,11 +423,7 @@ function showLinkedKey(keyData) {
         ? 'Expires: ' + new Date(keyData.expires_at).toLocaleDateString() : 'Expires: Never';
     document.getElementById('premiumUpsell').classList.add('hidden');
 
-    var keyRole = keyData.role || 'free';
-    var isPremium = ['premium', 'admin', 'founder'].indexOf(keyRole) !== -1;
-
-    document.getElementById('btnSelectPremium').style.opacity = isPremium ? '1' : '0.5';
-    document.getElementById('btnSelectPremium').title = isPremium ? '' : 'Requires premium key';
+    showTierSelect();
 
     sb.from('app_config').select('*').then(function(r) {
         var cfg = {};
@@ -437,26 +434,50 @@ function showLinkedKey(keyData) {
     });
 }
 
+function showTierSelect() {
+    var tierBtns = document.querySelectorAll('#btnSelectFree, #btnSelectPremium');
+    tierBtns.forEach(function(b) { b.style.display = 'inline-flex'; });
+    document.getElementById('dashDesc').textContent = 'Select a tier above to continue.';
+    document.getElementById('dashDesc').style.color = 'var(--text-3)';
+    document.getElementById('dashDownloadBtn').style.display = 'none';
+    document.getElementById('dashBackBtn').style.display = 'none';
+    document.getElementById('premiumUpsell').classList.add('hidden');
+
+    var keyRole = (currentKeyData && currentKeyData.role) || 'free';
+    var isPremium = ['premium', 'admin', 'founder'].indexOf(keyRole) !== -1;
+    document.getElementById('btnSelectPremium').style.opacity = isPremium ? '1' : '0.5';
+    document.getElementById('btnSelectPremium').title = isPremium ? '' : 'Requires premium key';
+}
+
 function selectLoaderTier(tier) {
     var keyRole = (currentKeyData && currentKeyData.role) || 'free';
     var isPremium = ['premium', 'admin', 'founder'].indexOf(keyRole) !== -1;
     var cfg = window._vyronCfg || {};
     var desc = document.getElementById('dashDesc');
     var btn = document.getElementById('dashDownloadBtn');
+    var backBtn = document.getElementById('dashBackBtn');
     var upsell = document.getElementById('premiumUpsell');
+    var tierBtns = document.querySelectorAll('#btnSelectFree, #btnSelectPremium');
 
     upsell.classList.add('hidden');
+    tierBtns.forEach(function(b) { b.style.display = 'none'; });
 
     if (tier === 'premium' && !isPremium) {
         desc.textContent = 'You need a premium key for this.';
         desc.style.color = 'var(--red)';
         btn.style.display = 'none';
+        backBtn.style.display = 'inline-flex';
         upsell.classList.remove('hidden');
         return;
     }
 
     desc.style.color = 'var(--text-3)';
-    if (tier === 'premium') {
+    if (tier === 'free') {
+        desc.textContent = 'Free loader is currently in development. Coming soon.';
+        desc.style.color = '#f59e0b';
+        btn.style.display = 'none';
+        backBtn.style.display = 'inline-flex';
+    } else {
         desc.textContent = 'Premium — full access: aimbot, silent aim, chams, ESP, all features.';
         var dlUrl = cfg.download_premium_url || cfg.download_url || '';
         if (dlUrl) {
@@ -465,15 +486,7 @@ function selectLoaderTier(tier) {
             btn.innerHTML = '<i class="fas fa-download"></i> Download Premium Loader';
             btn.style.display = 'inline-flex';
         }
-    } else {
-        desc.textContent = 'Free — basic features: ESP and basic aimbot.';
-        var dlUrl = cfg.download_free_url || cfg.download_url || '';
-        if (dlUrl) {
-            btn.href = dlUrl;
-            btn.classList.remove('disabled');
-            btn.innerHTML = '<i class="fas fa-download"></i> Download Free Loader';
-            btn.style.display = 'inline-flex';
-        }
+        backBtn.style.display = 'inline-flex';
     }
 }
 
