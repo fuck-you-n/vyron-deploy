@@ -129,7 +129,7 @@
             <!-- USERS -->
             <section id="section-users" class="content-section">
                 <div class="section-header"><h3>Registered Users</h3><button class="btn btn-secondary" onclick="loadAllData()"><i class="fas fa-sync-alt"></i> Refresh</button></div>
-                <div class="card"><div class="table-wrapper"><table class="data-table"><thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Linked Key</th><th>Key Status</th><th>Joined</th></tr></thead><tbody id="usersTableBody"><tr><td colspan="6" class="empty-row"><div class="empty-state"><p>Loading...</p></div></td></tr></tbody></table></div></div>
+                <div class="card"><div class="table-wrapper"><table class="data-table"><thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Linked Key</th><th>Key Status</th><th>Joined</th><th>Actions</th></tr></thead><tbody id="usersTableBody"><tr><td colspan="7" class="empty-row"><div class="empty-state"><p>Loading...</p></div></td></tr></tbody></table></div></div>
             </section>
 
             <!-- SETTINGS -->
@@ -186,6 +186,24 @@
                 <div id="editRoleStatus" class="status-msg hidden"></div>
             </div>
             <div class="modal-footer"><button class="btn btn-secondary" onclick="closeEditRoleModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditRole()"><i class="fas fa-save"></i> Save</button></div>
+        </div>
+    </div>
+
+    <!-- RESET PASSWORD MODAL -->
+    <div id="resetPwModal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeResetPwModal()"></div>
+        <div class="modal-card" style="width:440px">
+            <div class="modal-header"><h3><i class="fas fa-key"></i> Reset Password</h3><button class="btn-icon" onclick="closeResetPwModal()"><i class="fas fa-xmark"></i></button></div>
+            <div class="modal-body">
+                <div style="text-align:center;margin-bottom:16px">
+                    <div style="width:48px;height:48px;border-radius:50%;background:rgba(108,63,234,.15);display:inline-flex;align-items:center;justify-content:center;margin-bottom:8px"><i class="fas fa-user" style="color:var(--accent);font-size:18px"></i></div>
+                    <div style="font-weight:600" id="resetPwUsername">-</div>
+                    <div style="font-size:12px;color:var(--text-3)" id="resetPwEmail">-</div>
+                </div>
+                <div class="input-group"><label>New Password</label><div class="input-with-btn" style="position:relative"><input type="password" id="resetPwInput" placeholder="Min 6 characters" autocomplete="new-password" style="padding-right:40px"><button type="button" class="toggle-pw" onclick="toggleResetPw()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-3);cursor:pointer;z-index:1"><i class="fas fa-eye"></i></button></div></div>
+                <div id="resetPwStatus" class="status-msg hidden"></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeResetPwModal()">Cancel</button><button class="btn btn-danger" onclick="executeResetPw()"><i class="fas fa-key"></i> Reset Password</button></div>
         </div>
     </div>
 

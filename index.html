@@ -80,9 +80,10 @@
                 </div>
                 <div class="login-form">
                     <div class="input-group"><div class="input-wrap"><i class="fas fa-envelope"></i><input type="email" id="loginEmail" placeholder="Email" autocomplete="email"></div></div>
-                    <div class="input-group"><div class="input-wrap"><i class="fas fa-lock"></i><input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password"></div></div>
+                    <div class="input-group"><div class="input-wrap"><i class="fas fa-lock"></i><input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password"><button type="button" class="toggle-pw" onclick="toggleFieldPw('loginPassword', this)"><i class="fas fa-eye"></i></button></div></div>
                     <button id="btnLogin" class="btn-login" onclick="handleSignIn()"><span id="loginBtnText">Sign In</span><div id="loginSpinner" class="spinner hidden"></div></button>
                     <div id="loginStatus" class="status-msg hidden"></div>
+                    <div class="auth-toggle" style="margin-bottom:8px"><a onclick="showForgotPw()" style="font-size:12px">Forgot password?</a></div>
                     <div class="auth-toggle">Don't have an account? <a onclick="showSignUp()">Sign Up</a></div>
                 </div>
                 <div class="features">
@@ -101,10 +102,24 @@
                 <div class="login-form">
                     <div class="input-group"><div class="input-wrap"><i class="fas fa-user"></i><input type="text" id="signupUsername" placeholder="Username" autocomplete="username"></div></div>
                     <div class="input-group"><div class="input-wrap"><i class="fas fa-envelope"></i><input type="email" id="signupEmail" placeholder="Email" autocomplete="email"></div></div>
-                    <div class="input-group"><div class="input-wrap"><i class="fas fa-lock"></i><input type="password" id="signupPassword" placeholder="Password" autocomplete="new-password"></div></div>
+                    <div class="input-group"><div class="input-wrap"><i class="fas fa-lock"></i><input type="password" id="signupPassword" placeholder="Password" autocomplete="new-password"><button type="button" class="toggle-pw" onclick="toggleFieldPw('signupPassword', this)"><i class="fas fa-eye"></i></button></div></div>
                     <button id="btnSignup" class="btn-login" onclick="handleSignUp()"><span id="signupBtnText">Create Account</span><div id="signupSpinner" class="spinner hidden"></div></button>
                     <div id="signupStatus" class="status-msg hidden"></div>
                     <div class="auth-toggle">Already have an account? <a onclick="showLogin()">Sign In</a></div>
+                </div>
+            </div>
+
+            <div id="forgotCard" class="login-card hidden">
+                <div class="login-logo">
+                    <div class="logo-icon"><i class="fas fa-key"></i></div>
+                    <h1>VYRON</h1>
+                    <p>Reset your password</p>
+                </div>
+                <div class="login-form">
+                    <div class="input-group"><div class="input-wrap"><i class="fas fa-envelope"></i><input type="email" id="forgotEmail" placeholder="Email address" autocomplete="email"></div></div>
+                    <button id="btnForgot" class="btn-login" onclick="handleForgotPw()"><span id="forgotBtnText">Send Reset Link</span><div id="forgotSpinner" class="spinner hidden"></div></button>
+                    <div id="forgotStatus" class="status-msg hidden"></div>
+                    <div class="auth-toggle"><a onclick="showLogin()">Back to Sign In</a></div>
                 </div>
             </div>
         </div>
@@ -202,6 +217,43 @@ function showSignUp() {
 function showLogin() {
     document.getElementById('loginCard').classList.remove('hidden');
     document.getElementById('signupCard').classList.add('hidden');
+    document.getElementById('forgotCard').classList.add('hidden');
+}
+
+function showForgotPw() {
+    document.getElementById('loginCard').classList.add('hidden');
+    document.getElementById('signupCard').classList.add('hidden');
+    document.getElementById('forgotCard').classList.remove('hidden');
+}
+
+function toggleFieldPw(fieldId, btn) {
+    var input = document.getElementById(fieldId);
+    var icon = btn.querySelector('i');
+    input.type = input.type === 'password' ? 'text' : 'password';
+    icon.className = input.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+}
+
+function handleForgotPw() {
+    var email = document.getElementById('forgotEmail').value.trim();
+    var status = document.getElementById('forgotStatus');
+    var btn = document.getElementById('btnForgot');
+    if (!email) { showStatus(status, 'Enter your email address.', 'error'); return; }
+    if (!requireDb()) return;
+    btn.disabled = true;
+    document.getElementById('forgotBtnText').textContent = 'Sending...';
+    document.getElementById('forgotSpinner').classList.remove('hidden');
+    sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
+    .then(function() {
+        showStatus(status, 'Reset link sent! Check your email.', 'success');
+    })
+    .catch(function(e) {
+        showStatus(status, 'Error: ' + (e.message || 'Failed to send reset link.'), 'error');
+    })
+    .then(function() {
+        btn.disabled = false;
+        document.getElementById('forgotBtnText').textContent = 'Send Reset Link';
+        document.getElementById('forgotSpinner').classList.add('hidden');
+    });
 }
 
 function showStatus(el, msg, type) {

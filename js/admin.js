@@ -327,9 +327,12 @@ function renderUsers(keyMap) {
     keyMap = keyMap || {};
 
     if (!allProfiles.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-row"><div class="empty-state"><p>No registered users</p></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-row"><div class="empty-state"><p>No registered users</p></div></td></tr>';
         return;
     }
+
+    const emailMap = {};
+    if (currentSession && currentSession.user) emailMap[currentSession.user.id] = currentSession.user.email;
 
     tbody.innerHTML = allProfiles.map(p => {
         const role = p.role || 'free';
@@ -341,11 +344,14 @@ function renderUsers(keyMap) {
 
         return `<tr>
             <td style="font-weight:600">@${p.username}</td>
-            <td style="font-size:12px;color:var(--text-3)">—</td>
+            <td style="font-size:12px;color:var(--text-3)">${p.user_id ? p.user_id.substring(0, 8) + '...' : '—'}</td>
             <td><span class="badge badge-${ROLE_COLORS[role]}" onclick="openEditRole(null,'${p.username}','${role}')" style="cursor:pointer"><i class="fas ${ROLE_ICONS[role]}"></i> ${role}</span></td>
             <td class="key-cell" style="font-size:12px">${keyDisplay}</td>
             <td><span class="badge badge-${keyColor}">${keyStatus}</span></td>
             <td>${joined}</td>
+            <td><div class="action-btns">
+                <button class="btn btn-sm btn-warning" onclick="openResetPw('${p.user_id}','@${p.username}')" title="Reset Password"><i class="fas fa-key"></i></button>
+            </div></td>
         </tr>`;
     }).join('');
 }
@@ -374,3 +380,61 @@ function exportKeys() {
 }
 
 function showStatus(el, msg, type) { el.textContent = msg; el.className = 'status-msg ' + type; }
+
+// ===== RESET PASSWORD =====
+let resetPwUserId = null;
+
+function openResetPw(userId, username) {
+    resetPwUserId = userId;
+    document.getElementById('resetPwUsername').textContent = username;
+    document.getElementById('resetPwEmail').textContent = 'User ID: ' + userId.substring(0, 12) + '...';
+    document.getElementById('resetPwInput').value = '';
+    document.getElementById('resetPwStatus').classList.add('hidden');
+    document.getElementById('resetPwModal').classList.remove('hidden');
+}
+
+function closeResetPwModal() {
+    document.getElementById('resetPwModal').classList.add('hidden');
+    resetPwUserId = null;
+}
+
+function toggleResetPw() {
+    const input = document.getElementById('resetPwInput');
+    const icon = document.querySelector('#resetPwModal .toggle-pw i');
+    input.type = input.type === 'password' ? 'text' : 'password';
+    icon.className = input.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+}
+
+async function executeResetPw() {
+    if (!resetPwUserId) return;
+    const newPw = document.getElementById('resetPwInput').value;
+    const status = document.getElementById('resetPwStatus');
+
+    if (!newPw || newPw.length < 6) {
+        showStatus(status, 'Password must be at least 6 characters.', 'error');
+        return;
+    }
+
+    try {
+        showStatus(status, 'Resetting password...', '');
+        const resp = await fetch('/api/admin-reset-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: resetPwUserId,
+                new_password: newPw,
+                admin_id: currentSession.user.id
+            })
+        });
+        const data = await resp.json();
+        if (data.error) {
+            showStatus(status, data.error, 'error');
+        } else {
+            showStatus(status, 'Password updated successfully!', 'success');
+            setTimeout(closeResetPwModal, 1500);
+        }
+    } catch (e) {
+        console.error('[VYRON ADMIN] Reset password error:', e);
+        showStatus(status, 'Connection error.', 'error');
+    }
+}
