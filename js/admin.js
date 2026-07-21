@@ -272,8 +272,7 @@ async function loadPlanConfig() {
     const { data } = await window._supabase.from('app_config').select('*');
     if (!data) return;
     const map = {}; data.forEach(r => map[r.key] = r.value);
-    document.getElementById('cfgPremiumUrl').value = map['download_premium_url'] || '';
-    document.getElementById('cfgFreeUrl').value = map['download_free_url'] || '';
+    document.getElementById('cfgDownloadUrl').value = map['download_url'] || map['download_premium_url'] || map['download_free_url'] || '';
     document.getElementById('cfgVersion').value = map['version'] || '1.0.0';
     document.getElementById('cfgChangelog').value = map['changelog'] || '';
 
@@ -297,8 +296,7 @@ async function loadPlanConfig() {
 async function savePlanConfig() {
     const status = document.getElementById('planConfigStatus');
     const updates = [
-        { key: 'download_premium_url', value: document.getElementById('cfgPremiumUrl').value.trim() },
-        { key: 'download_free_url', value: document.getElementById('cfgFreeUrl').value.trim() },
+        { key: 'download_url', value: document.getElementById('cfgDownloadUrl').value.trim() },
         { key: 'version', value: document.getElementById('cfgVersion').value.trim() },
         { key: 'changelog', value: document.getElementById('cfgChangelog').value.trim() },
     ];

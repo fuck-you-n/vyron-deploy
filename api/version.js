@@ -32,11 +32,7 @@ module.exports = async function handler(req, res) {
                     if (cfg.version) version = cfg.version;
                     if (cfg.changelog) changelog = cfg.changelog;
 
-                    if (tier === 'premium' || tier === 'admin' || tier === 'founder') {
-                        downloadUrl = cfg.download_premium_url || '';
-                    } else {
-                        downloadUrl = cfg.download_free_url || '';
-                    }
+                    downloadUrl = cfg.download_url || cfg.download_premium_url || cfg.download_free_url || '';
                 }
             } catch (e) {
                 console.error('DB lookup failed, using config.json:', e.message);
