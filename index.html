@@ -501,30 +501,28 @@ function handleLinkPremiumKey() {
     if (!keyValue) { showKeyStatus(status, 'Enter a premium key.', 'error'); return; }
     if (!requireDb()) return;
 
-    sb.from('license_keys').select('*').eq('key_value', keyValue).single()
-    .then(function(r) {
-        var key = r.data;
-        if (r.error || !key) { showKeyStatus(status, 'Key not found.', 'error'); return; }
-        if (!key.is_active) { showKeyStatus(status, 'Key has been revoked.', 'error'); return; }
-        if (key.expires_at && new Date(key.expires_at) < new Date()) { showKeyStatus(status, 'Key has expired.', 'error'); return; }
-        if (key.user_id && key.user_id !== currentUser.id) { showKeyStatus(status, 'Key linked to another account.', 'error'); return; }
-        var keyRole = key.role || 'free';
-        if (['premium', 'admin', 'founder'].indexOf(keyRole) === -1) { showKeyStatus(status, 'This is not a premium key.', 'error'); return; }
-        return sb.from('license_keys').update({ user_id: currentUser.id }).eq('key_value', keyValue);
+    sb.auth.getSession().then(function(sess) {
+        var token = sess.data.session && sess.data.session.access_token;
+        if (!token) { showKeyStatus(status, 'Not authenticated.', 'error'); return; }
+
+        return fetch('/api/link-key', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ key_value: keyValue })
+        });
     })
-    .then(function(r) {
-        if (r && r.error) { showKeyStatus(status, 'Failed to link key.', 'error'); return; }
-        if (r) showKeyStatus(status, 'Premium key linked!', 'success');
-        return sb.from('license_keys').select('*').eq('key_value', keyValue).single();
-    })
-    .then(function(r) {
-        if (r && r.data) {
-            if (r.data.role && r.data.role !== 'free' && currentProfile && currentProfile.role === 'free') {
-                sb.from('user_profiles').update({ role: r.data.role }).eq('user_id', currentUser.id)
-                .then(function() { currentProfile.role = r.data.role; });
-            }
-            setTimeout(function() { showLinkedKey(r.data); }, 500);
+    .then(function(resp) { return resp && resp.json(); })
+    .then(function(data) {
+        if (!data) return;
+        if (data.retryAfter) { showKeyStatus(status, 'Too many attempts. Wait ' + data.retryAfter + 's.', 'error'); return; }
+        if (!data.success) { showKeyStatus(status, data.reason || data.error || 'Failed.', 'error'); return; }
+
+        showKeyStatus(status, 'Premium key linked!', 'success');
+        var keyRole = data.key && data.key.role || 'free';
+        if (['premium', 'admin', 'founder'].indexOf(keyRole) !== -1 && currentProfile && currentProfile.role === 'free') {
+            currentProfile.role = keyRole;
         }
+        setTimeout(function() { showLinkedKey(data.key); }, 500);
     })
     .catch(function(e) { showKeyStatus(status, 'Connection error.', 'error'); });
 }
@@ -536,28 +534,28 @@ function handleLinkKey() {
     if (!keyValue) { showKeyStatus(status, 'Enter a license key.', 'error'); return; }
     if (!requireDb()) return;
 
-    sb.from('license_keys').select('*').eq('key_value', keyValue).single()
-    .then(function(r) {
-        var key = r.data;
-        if (r.error || !key) { showKeyStatus(status, 'Key not found.', 'error'); return; }
-        if (!key.is_active) { showKeyStatus(status, 'Key has been revoked.', 'error'); return; }
-        if (key.expires_at && new Date(key.expires_at) < new Date()) { showKeyStatus(status, 'Key has expired.', 'error'); return; }
-        if (key.user_id && key.user_id !== currentUser.id) { showKeyStatus(status, 'Key linked to another account.', 'error'); return; }
-        return sb.from('license_keys').update({ user_id: currentUser.id }).eq('key_value', keyValue);
+    sb.auth.getSession().then(function(sess) {
+        var token = sess.data.session && sess.data.session.access_token;
+        if (!token) { showKeyStatus(status, 'Not authenticated.', 'error'); return; }
+
+        return fetch('/api/link-key', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ key_value: keyValue })
+        });
     })
-    .then(function(r) {
-        if (r && r.error) { showKeyStatus(status, 'Failed to link key.', 'error'); return; }
-        if (r) showKeyStatus(status, 'Key linked!', 'success');
-        return sb.from('license_keys').select('*').eq('key_value', keyValue).single();
-    })
-    .then(function(r) {
-        if (r && r.data) {
-            if (r.data.role && r.data.role !== 'free' && currentProfile && currentProfile.role === 'free') {
-                sb.from('user_profiles').update({ role: r.data.role }).eq('user_id', currentUser.id)
-                .then(function() { currentProfile.role = r.data.role; });
-            }
-            setTimeout(function() { showLinkedKey(r.data); }, 500);
+    .then(function(resp) { return resp && resp.json(); })
+    .then(function(data) {
+        if (!data) return;
+        if (data.retryAfter) { showKeyStatus(status, 'Too many attempts. Wait ' + data.retryAfter + 's.', 'error'); return; }
+        if (!data.success) { showKeyStatus(status, data.reason || data.error || 'Failed.', 'error'); return; }
+
+        showKeyStatus(status, 'Key linked!', 'success');
+        var keyRole = data.key && data.key.role || 'free';
+        if (['premium', 'admin', 'founder'].indexOf(keyRole) !== -1 && currentProfile && currentProfile.role === 'free') {
+            currentProfile.role = keyRole;
         }
+        setTimeout(function() { showLinkedKey(data.key); }, 500);
     })
     .catch(function(e) { showKeyStatus(status, 'Connection error.', 'error'); });
 }

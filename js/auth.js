@@ -1,4 +1,4 @@
-// Auth page — key validation
+// Auth page — key validation (server-side only)
 
 async function handleValidate() {
     const keyInput = document.getElementById('licenseKey');
@@ -19,44 +19,40 @@ async function handleValidate() {
     status.classList.add('hidden');
 
     try {
-        const { data, error } = await _supabase
-            .from('license_keys')
-            .select('*')
-            .eq('key_value', keyValue)
-            .single();
+        const resp = await fetch('/api/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: keyValue })
+        });
 
-        if (error || !data) {
-            showStatus(status, 'Key not found. Please check and try again.', 'error');
+        if (resp.status === 429) {
+            const data = await resp.json();
+            showStatus(status, data.reason || 'Too many attempts. Please wait.', 'error');
             return;
         }
 
-        if (!data.is_active) {
-            showStatus(status, 'This key has been revoked.', 'error');
+        const data = await resp.json();
+
+        if (!data.valid) {
+            showStatus(status, data.reason || 'Key not found.', 'error');
             return;
         }
 
-        if (data.expires_at && new Date(data.expires_at) < new Date()) {
-            showStatus(status, 'This key has expired.', 'error');
-            return;
-        }
-
-        const tier = data.tier === 'premium' ? 'Premium' : 'Free';
-        const expiry = data.expires_at
-            ? new Date(data.expires_at).toLocaleDateString()
+        const tier = data.tier === 'premium' ? 'Premium' : data.role === 'admin' ? 'Admin' : data.role === 'founder' ? 'Founder' : 'Free';
+        const expiry = data.expires
+            ? new Date(data.expires).toLocaleDateString()
             : 'Never';
 
-        // Show success state
         document.querySelector('.login-form').innerHTML = `
             <div class="success-card">
                 <div class="success-icon"><i class="fas fa-check-circle"></i></div>
                 <h3>Key Verified</h3>
-                <div class="key-display">${data.key_value}</div>
                 <div class="key-details">
-                    <div class="detail"><span>Tier</span><span class="badge badge-${data.tier === 'premium' ? 'purple' : 'yellow'}">${tier}</span></div>
+                    <div class="detail"><span>Tier</span><span class="badge badge-${data.tier === 'premium' || data.role === 'admin' || data.role === 'founder' ? 'purple' : 'yellow'}">${tier}</span></div>
                     <div class="detail"><span>Expires</span><span>${expiry}</span></div>
                     <div class="detail"><span>Status</span><span class="badge badge-green">Active</span></div>
                 </div>
-                <p class="success-msg">Open the Vyron Loader on your desktop and paste your key to launch.</p>
+                <p class="success-msg">Open the Vyron Loader on your desktop and log in with your account.</p>
             </div>
         `;
     } catch (e) {
@@ -73,7 +69,6 @@ function showStatus(el, message, type) {
     el.className = 'status-msg ' + type;
 }
 
-// Enter key support
 document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('licenseKey');
     if (input) {

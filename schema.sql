@@ -14,6 +14,7 @@ DROP FUNCTION IF EXISTS handle_new_user();
 CREATE TABLE IF NOT EXISTS license_keys (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     key_value TEXT NOT NULL UNIQUE,
+    key_hash TEXT,
     is_active BOOLEAN NOT NULL DEFAULT true,
     tier TEXT NOT NULL DEFAULT 'free',
     hwid TEXT,
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS license_keys (
 -- Add columns that may not exist on older tables
 DO $$ BEGIN ALTER TABLE license_keys ADD COLUMN role TEXT NOT NULL DEFAULT 'free'; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE license_keys ADD COLUMN user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE license_keys ADD COLUMN key_hash TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 
 -- Add check constraint if not exists
 DO $$ BEGIN
@@ -33,7 +35,11 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_license_keys_key_value ON license_keys(key_value);
+CREATE INDEX IF NOT EXISTS idx_license_keys_key_hash ON license_keys(key_hash);
 CREATE INDEX IF NOT EXISTS idx_license_keys_user_id ON license_keys(user_id);
+
+-- Migrate existing keys: populate key_hash from key_value
+UPDATE license_keys SET key_hash = encode(sha256(key_value::bytea), 'hex') WHERE key_hash IS NULL;
 
 -- App config (version, download URLs, changelog)
 CREATE TABLE IF NOT EXISTS app_config (
@@ -50,6 +56,24 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Add hwid column to user_profiles if missing
+DO $$ BEGIN ALTER TABLE user_profiles ADD COLUMN hwid TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE user_profiles ADD COLUMN last_online TIMESTAMPTZ; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+
+-- Login attempts for rate limiting
+CREATE TABLE IF NOT EXISTS login_attempts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ip TEXT NOT NULL,
+    endpoint TEXT NOT NULL DEFAULT 'login',
+    success BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_login_attempts_ip ON login_attempts(ip, created_at DESC);
+
+-- Auto-cleanup old login attempts (keep last 1 hour)
+-- Run via pg_cron or as a scheduled function
+
 -- ===================== RLS =====================
 
 -- ===================== license_keys RLS =====================
@@ -61,9 +85,13 @@ DROP POLICY IF EXISTS "Link key to own account" ON license_keys;
 DROP POLICY IF EXISTS "Read own linked key" ON license_keys;
 DROP POLICY IF EXISTS "Authenticated read for linking" ON license_keys;
 
--- Anyone can read keys (for API validation)
-CREATE POLICY "Public read for validation"
-    ON license_keys FOR SELECT USING (true);
+-- Users can read their own linked key
+CREATE POLICY "Read own linked key"
+    ON license_keys FOR SELECT
+    USING (
+        auth.uid() IS NOT NULL
+        AND user_id = auth.uid()
+    );
 
 -- Authenticated users can link unlinked keys to their account
 CREATE POLICY "Link key to own account"
@@ -73,14 +101,6 @@ CREATE POLICY "Link key to own account"
         AND (user_id IS NULL OR user_id = auth.uid())
     )
     WITH CHECK (user_id = auth.uid());
-
--- Users can read their own linked key
-CREATE POLICY "Read own linked key"
-    ON license_keys FOR SELECT
-    USING (
-        auth.uid() IS NOT NULL
-        AND user_id = auth.uid()
-    );
 
 -- Admin + Founder full access (checks user_profiles — no recursion since user_profiles is wide-open for reads)
 CREATE POLICY "Admins and Founders full access"
@@ -113,9 +133,7 @@ CREATE POLICY "Admin write config"
     );
 
 -- ===================== user_profiles RLS =====================
--- FIXED: No recursive policies. Any authenticated user can read all profiles.
--- Usernames and roles are not sensitive data, and the admin panel needs
--- to read all profiles. This eliminates the chicken-and-egg problem.
+-- Any authenticated user can read all profiles (usernames/roles are not secret)
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users read own profile" ON user_profiles;
@@ -124,21 +142,24 @@ DROP POLICY IF EXISTS "Users insert own profile" ON user_profiles;
 DROP POLICY IF EXISTS "Users update own profile" ON user_profiles;
 DROP POLICY IF EXISTS "Authenticated read profiles" ON user_profiles;
 
--- Any authenticated user can read any profile (usernames/roles are not secret)
 CREATE POLICY "Authenticated read profiles"
     ON user_profiles FOR SELECT
     USING (auth.uid() IS NOT NULL);
 
--- Users can insert their own profile (during signup)
 CREATE POLICY "Users insert own profile"
     ON user_profiles FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
--- Users can update their own profile
 CREATE POLICY "Users update own profile"
     ON user_profiles FOR UPDATE
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
+
+-- ===================== login_attempts RLS =====================
+ALTER TABLE login_attempts ENABLE ROW LEVEL SECURITY;
+
+-- Service role only (no client access)
+-- No policies = no client access via anon key
 
 -- ===================== TRIGGERS =====================
 

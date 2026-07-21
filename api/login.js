@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { checkRateLimit, recordAttempt, getClientIp } = require('./rate-limit');
 
 module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -13,6 +14,12 @@ module.exports = async function handler(req, res) {
     }
 
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+    const ip = getClientIp(req);
+
+    const rl = await checkRateLimit(supabase, ip, 'login', 5, 15);
+    if (rl.blocked) {
+        return res.status(429).json({ valid: false, reason: 'Too many login attempts. Try again in ' + rl.retryAfter + ' seconds.', retryAfter: rl.retryAfter });
+    }
 
     try {
         let body = req.body;
@@ -27,6 +34,7 @@ module.exports = async function handler(req, res) {
         const hwid = body.hwid;
 
         if (!email || !password) {
+            await recordAttempt(supabase, ip, 'login', false);
             return res.json({ valid: false, reason: 'Missing email or password.' });
         }
 
@@ -41,11 +49,13 @@ module.exports = async function handler(req, res) {
                 .single();
 
             if (lookupErr || !profile) {
+                await recordAttempt(supabase, ip, 'login', false);
                 return res.json({ valid: false, reason: 'User not found.' });
             }
 
             const { data: authUser, error: authErr } = await supabase.auth.admin.getUserById(profile.user_id);
             if (authErr || !authUser?.user?.email) {
+                await recordAttempt(supabase, ip, 'login', false);
                 return res.json({ valid: false, reason: 'User not found.' });
             }
             loginEmail = authUser.user.email;
@@ -57,6 +67,7 @@ module.exports = async function handler(req, res) {
         });
 
         if (signInErr || !authData?.user) {
+            await recordAttempt(supabase, ip, 'login', false);
             return res.json({ valid: false, reason: 'Invalid email or password.' });
         }
 
@@ -73,22 +84,37 @@ module.exports = async function handler(req, res) {
                 user_id: userId,
                 username: authData.user.user_metadata?.username || loginEmail.split('@')[0],
                 role: 'free',
-                tier: 'free'
+                tier: 'free',
+                hwid: hwid || null
             });
+            await recordAttempt(supabase, ip, 'login', true);
             return res.json({
                 valid: true,
                 username: authData.user.user_metadata?.username || loginEmail.split('@')[0],
                 tier: 'free',
                 role: 'free',
+                key_role: 'free',
                 expires: null
             });
         }
 
         if (hwid) {
-            await supabase
-                .from('user_profiles')
-                .update({ hwid, last_online: new Date().toISOString() })
-                .eq('user_id', userId);
+            if (profile.hwid && profile.hwid !== hwid) {
+                await recordAttempt(supabase, ip, 'login', false);
+                return res.json({ valid: false, reason: 'Account bound to another device. Contact support to reset.' });
+            }
+
+            if (!profile.hwid) {
+                await supabase
+                    .from('user_profiles')
+                    .update({ hwid, last_online: new Date().toISOString() })
+                    .eq('user_id', userId);
+            } else {
+                await supabase
+                    .from('user_profiles')
+                    .update({ last_online: new Date().toISOString() })
+                    .eq('user_id', userId);
+            }
         }
 
         let expires = null;
@@ -102,6 +128,8 @@ module.exports = async function handler(req, res) {
             if (linkedKey.expires_at) expires = linkedKey.expires_at;
             if (linkedKey.role) keyRole = linkedKey.role;
         }
+
+        await recordAttempt(supabase, ip, 'login', true);
 
         return res.json({
             valid: true,

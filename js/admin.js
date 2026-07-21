@@ -237,16 +237,31 @@ async function createKey() {
     const durationDays = document.getElementById('newExpiry').value;
     const status = document.getElementById('createStatus');
     if (!key) { showStatus(status, 'Enter or generate a key.', 'error'); return; }
-    const payload = { key_value: key, role, is_active: true };
+
+    let expires_at = null;
     if (durationDays) {
         const expires = new Date();
         expires.setDate(expires.getDate() + parseInt(durationDays));
-        payload.expires_at = expires.toISOString();
+        expires_at = expires.toISOString();
     }
-    const { error } = await window._supabase.from('license_keys').insert(payload);
-    if (error) { showStatus(status, error.message, 'error'); return; }
-    showStatus(status, 'Created: ' + key, 'success');
-    await loadKeys(); setTimeout(closeCreateModal, 1000);
+
+    try {
+        const sess = await window._supabase.auth.getSession();
+        const token = sess.data.session && sess.data.session.access_token;
+        if (!token) { showStatus(status, 'Not authenticated.', 'error'); return; }
+
+        const resp = await fetch('/api/create-key', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ key_value: key, role, expires_at })
+        });
+        const data = await resp.json();
+        if (data.error) { showStatus(status, data.error, 'error'); return; }
+        showStatus(status, 'Created: ' + key, 'success');
+        await loadKeys(); setTimeout(closeCreateModal, 1000);
+    } catch (e) {
+        showStatus(status, 'Connection error.', 'error');
+    }
 }
 
 async function revokeKey(id) { await window._supabase.from('license_keys').update({ is_active: false }).eq('id', id); await loadKeys(); }
@@ -330,7 +345,7 @@ function renderUsers(keyMap) {
     keyMap = keyMap || {};
 
     if (!allProfiles.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-row"><div class="empty-state"><p>No registered users</p></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-row"><div class="empty-state"><p>No registered users</p></div></td></tr>';
         return;
     }
 
@@ -344,6 +359,7 @@ function renderUsers(keyMap) {
         const keyStatus = linkedKey ? (linkedKey.is_active ? 'Active' : 'Revoked') : 'No key';
         const keyColor = linkedKey ? (linkedKey.is_active ? 'green' : 'red') : 'yellow';
         const joined = new Date(p.created_at).toLocaleDateString();
+        const hwid = p.hwid ? p.hwid.substring(0, 14) + '...' : '—';
 
         return `<tr>
             <td style="font-weight:600">@${p.username}</td>
@@ -351,9 +367,11 @@ function renderUsers(keyMap) {
             <td><span class="badge badge-${ROLE_COLORS[role]}" onclick="openEditRole(null,'${p.username}','${role}')" style="cursor:pointer"><i class="fas ${ROLE_ICONS[role]}"></i> ${role}</span></td>
             <td class="key-cell" style="font-size:12px">${keyDisplay}</td>
             <td><span class="badge badge-${keyColor}">${keyStatus}</span></td>
+            <td style="font-size:11px;color:var(--text-3)">${hwid}</td>
             <td>${joined}</td>
             <td><div class="action-btns">
                 <button class="btn btn-sm btn-warning" onclick="openResetPw('${p.user_id}','@${p.username}')" title="Reset Password"><i class="fas fa-key"></i></button>
+                <button class="btn btn-sm btn-secondary" onclick="resetHwid('${p.user_id}','@${p.username}')" title="Reset HWID"><i class="fas fa-fingerprint"></i></button>
             </div></td>
         </tr>`;
     }).join('');
@@ -439,6 +457,29 @@ async function executeResetPw() {
     } catch (e) {
         console.error('[VYRON ADMIN] Reset password error:', e);
         showStatus(status, 'Connection error.', 'error');
+    }
+}
+
+// ===== HWID RESET =====
+async function resetHwid(userId, username) {
+    if (!confirm('Reset HWID binding for ' + username + '? They will re-bind on next login.')) return;
+
+    try {
+        const sess = await window._supabase.auth.getSession();
+        const token = sess.data.session && sess.data.session.access_token;
+        if (!token) { alert('Not authenticated.'); return; }
+
+        const resp = await fetch('/api/admin-reset-hwid', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ target_user_id: userId })
+        });
+        const data = await resp.json();
+        if (data.error) { alert(data.error); return; }
+        alert('HWID reset for ' + username + '.');
+    } catch (e) {
+        console.error('[VYRON ADMIN] Reset HWID error:', e);
+        alert('Connection error.');
     }
 }
 
