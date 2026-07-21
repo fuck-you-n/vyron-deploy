@@ -43,7 +43,11 @@ module.exports = async function handler(req, res) {
             }
         }
 
-        // Fallback
+        // Fallback to config.json download_url
+        if (!downloadUrl) {
+            downloadUrl = config.download_url || '';
+        }
+
         if (!downloadUrl) {
             const proto = req.headers['x-forwarded-proto'] || 'https';
             const host = req.headers.host;
