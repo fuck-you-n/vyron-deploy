@@ -254,14 +254,10 @@ function handleSignUp() {
         .then(function(profileCheck) {
             console.log('PROFILE CHECK:', JSON.stringify(profileCheck));
             if (!profileCheck.data) {
-                return sb.from('user_profiles').insert({ user_id: user.id, username: username, role: 'free' })
-                .then(function() {
-                    return sb.from('user_profiles').select('user_id').limit(1).order('created_at', {ascending: true});
-                })
-                .then(function(firstUser) {
-                    if (firstUser.data && firstUser.data.length === 1 && firstUser.data[0].user_id === user.id) {
-                        return sb.from('user_profiles').update({ role: 'founder' }).eq('user_id', user.id);
-                    }
+                return sb.from('user_profiles').insert({
+                    user_id: user.id,
+                    username: username,
+                    role: 'free'
                 });
             }
         })

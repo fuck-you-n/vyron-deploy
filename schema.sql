@@ -4,6 +4,10 @@
 -- Safe to re-run (uses IF NOT EXISTS / DROP IF EXISTS)
 -- ============================================================
 
+-- Kill any old triggers first
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS handle_new_user();
+
 -- ===================== TABLES =====================
 
 -- License keys
